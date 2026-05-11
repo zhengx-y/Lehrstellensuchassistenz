@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using IWshRuntimeLibrary;
+using System.Linq;
 
 namespace Lehrstellensuchassistenz
 {
@@ -23,15 +24,11 @@ namespace Lehrstellensuchassistenz
         {
             InitializeComponent();
 
-            // ObservableCollection für Firmen initialisieren
             Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-            Companies.CollectionChanged += (s, e) => SaveCompanies();
+
             LoadCompanies();
             MainFrame.Navigate(new CompanyListPage(Companies));
-
-            // Shortcut prüfen und ggf. erstellen
             CheckDesktopShortcut();
-
             ShowWelcomePopup();
         }
 
@@ -184,6 +181,15 @@ Die Ansicht kann mit Strg + Mausrad gezoomt werden.",
             // Delete-Taste
             if (e.Key == Key.Delete)
             {
+                // Wir prüfen, ob der Fokus gerade in einer TextBox oder RichTextBox liegt
+                if (FocusManager.GetFocusedElement(this) is TextBox ||
+                    FocusManager.GetFocusedElement(this) is RichTextBox)
+                {
+                    // Wir tun NICHTS und lassen die Taste zur Textbox durchgehen
+                    return;
+                }
+
+                // Wenn kein Eingabefeld fokussiert ist, führen wir das Firmen-Löschen aus
                 Delete_Click(sender, new RoutedEventArgs());
                 e.Handled = true;
             }
@@ -274,54 +280,98 @@ Die Ansicht kann mit Strg + Mausrad gezoomt werden.",
 
         public void SaveCompanies()
         {
+            // 1. Falls wir in der Detailansicht sind...
+            if (MainFrame.Content is UnternehmenElement detailPage)
+            {
+                if (detailPage.IsDirty)
+                {
+                    detailPage.SyncNotizenToModel();
+                    detailPage.Company?.AktualisiereZeitstempel();
+                    detailPage.ResetDirtyFlag(); // <-- Wieder auf "sauber" setzen
+                }
+            }
+
+            // 2. Tatsächliches Schreiben auf die Festplatte (wie gehabt)
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true,
                 Converters = { new JsonStringEnumConverter() }
             };
 
-            string json = JsonSerializer.Serialize(Companies, options);
-            System.IO.File.WriteAllText(filePath, json);
+            try
+            {
+                string json = JsonSerializer.Serialize(Companies, options);
+                System.IO.File.WriteAllText(filePath, json);
+
+                // Optional: Nach dem Speichern die Liste neu sortieren, 
+                // damit das "Zuletzt geändert" sofort wirksam wird, wenn man zurückgeht.
+                ApplySorting();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Fehler beim Speichern: " + ex.Message);
+            }
         }
+
         private void LoadCompanies()
         {
-            if (!System.IO.File.Exists(filePath))
+            try
             {
-                // Datei leer anlegen, falls nicht vorhanden
-                System.IO.File.WriteAllText(filePath, "[]");
+                if (!System.IO.File.Exists(filePath))
+                {
+                    // Datei leer anlegen, falls nicht vorhanden
+                    System.IO.File.WriteAllText(filePath, "[]");
+                }
+
+                var options = new JsonSerializerOptions
+                {
+                    Converters = { new JsonStringEnumConverter() }
+                };
+
+                string json = System.IO.File.ReadAllText(filePath);
+                var loaded = JsonSerializer.Deserialize<ObservableCollection<Unternehmen>>(json, options);
+
+                if (loaded != null)
+                {
+                    foreach (var c in loaded)
+                        Companies.Add(c);
+                }
             }
-
-            var options = new JsonSerializerOptions
+            catch (Exception ex)
             {
-                Converters = { new JsonStringEnumConverter() }
-            };
-
-            string json = System.IO.File.ReadAllText(filePath);
-            var loaded = JsonSerializer.Deserialize<ObservableCollection<Unternehmen>>(json, options);
-
-            if (loaded != null)
-            {
-                foreach (var c in loaded)
-                    Companies.Add(c);
+                Debug.WriteLine("Fehler beim Speichern: " + ex.Message);
             }
-        }
-
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
-            SaveCompanies();
-            base.OnClosing(e);
         }
 
         private void ReturnPage_Click(object sender, RoutedEventArgs e)
         {
+            // Wir rufen SaveCompanies direkt auf. 
+            // Da SaveCompanies() oben bereits prüft, ob es ein UnternehmenElement ist 
+            // und SyncNotizenToModel() triggert, reicht dieser eine Aufruf!
             SaveCompanies();
-            // Navigiert zurück zur CompanyListPage und übergibt weiterhin die zentrale ObservableCollection
+
             MainFrame.Navigate(new CompanyListPage(Companies));
+        }
+
+        // Im Konstruktor vom MainWindow oder über das Properties-Fenster (Closing-Event)
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Ein letztes Mal alles sichern
+            SaveCompanies();
+            base.OnClosing(e);
         }
 
         private void SaveCompanies_Click(object sender, RoutedEventArgs e)
         {
+            // 1. Falls gerade ein Unternehmen-Detailbereich offen ist, Notizen synchronisieren
+            if (MainFrame.Content is UnternehmenElement detailSeite)
+            {
+                detailSeite.SyncNotizenToModel();
+            }
+
+            // 2. Jetzt erst wirklich speichern
             SaveCompanies();
+
             MessageBox.Show("Alle Änderungen wurden gespeichert!");
         }
 
@@ -553,64 +603,81 @@ Die Ansicht kann mit Strg + Mausrad gezoomt werden.",
             }
         }
 
-        // Sortieren nach Datum
-        private void SortByDate(bool ascending = true)
+        // Diese Methode fängt Klicks auf BEIDE Checkboxen ab
+        private void SortTrigger_Click(object sender, RoutedEventArgs e)
         {
-            var sorted = ascending
-                ? Companies.OrderBy(c => c.ErstellDatum).ToList()
-                : Companies.OrderByDescending(c => c.ErstellDatum).ToList();
-
-            Companies.Clear();
-            foreach (var c in sorted)
-                Companies.Add(c);
+            ApplySorting();
         }
 
-        // Sortieren nach Name (Anfangsbuchstabe)
-        private void SortByName(bool ascending = true)
-        {
-            var sorted = ascending
-                ? Companies.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList()
-                : Companies.OrderByDescending(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList();
-
-            Companies.Clear();
-            foreach (var c in sorted)
-                Companies.Add(c);
-        }
-
-        // ComboBox SelectionChanged
+        // Diese Methode reagiert auf die ComboBox
         private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (SortComboBox.SelectedItem is ComboBoxItem item)
+            // Wichtig: Beim Initialisieren ist die ComboBox manchmal noch null
+            ApplySorting();
+        }
+
+        private void ApplySorting()
+        {
+            // Sicherheitscheck (erweitert um die neue Checkbox)
+            if (SortComboBox == null || Companies == null || CheckAbgelehnt == null ||
+                CheckKeineAntwort == null || CheckUnbeworbenOben == null)
+                return;
+
+            var selectedItem = SortComboBox.SelectedItem as ComboBoxItem;
+            string tag = selectedItem?.Tag?.ToString() ?? "DateDesc";
+            bool ascending = tag.EndsWith("Asc");
+
+            // --- LINQ SORTIERUNG ---
+
+            // 1. Priorität: Unbeworben GANZ NACH OBEN (falls Checkbox an)
+            // Da wir nach oben wollen, sortieren wir absteigend (True/1 kommt vor False/0)
+            var query = Companies.OrderByDescending(c =>
+                CheckUnbeworbenOben.IsChecked == true && c.BewerbungsStatus == Status.Unbeworben);
+
+            // 2. Priorität: Abgelehnte nach unten (False vor True)
+            query = query.ThenBy(c =>
+                CheckAbgelehnt.IsChecked == true && c.BewerbungsStatus == Status.Abgelehnt);
+
+            // 3. Priorität: Keine Antwort nach unten
+            query = query.ThenBy(c =>
+                CheckKeineAntwort.IsChecked == true && c.BewerbungsStatus == Status.KeineAntwort);
+
+            // 4. Die eigentliche Sortierung
+            List<Unternehmen> sorted;
+
+            if (tag.StartsWith("Date")) // Erstell-Datum
             {
-                // Ignoriere den Platzhalter
-                if (item.IsEnabled == false) return;
+                sorted = ascending
+                    ? query.ThenBy(c => c.ErstellDatum).ToList()
+                    : query.ThenByDescending(c => c.ErstellDatum).ToList();
+            }
+            else if (tag.StartsWith("Edit")) // NEU: Zuletzt geändert
+            {
+                sorted = ascending
+                    ? query.ThenBy(c => c.ZuletztGeaendert).ToList()
+                    : query.ThenByDescending(c => c.ZuletztGeaendert).ToList();
+            }
+            else // Name
+            {
+                sorted = ascending
+                    ? query.ThenBy(c => c.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase).ToList()
+                    : query.ThenByDescending(c => c.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase).ToList();
+            }
 
-                string? tag = item.Tag?.ToString();
-                bool ascending = tag?.EndsWith("Asc") == true;
+            RefreshCompanies(sorted);
+        }
 
-                switch (tag)
-                {
-                    case "DateAsc":
-                    case "DateDesc":
-                        SortByDate(ascending);
-                        break;
-
-                    case "NameAsc":
-                    case "NameDesc":
-                        SortByName(ascending);
-                        break;
-                }
-
-                // Platzhalter „Sortieren“ entfernen, damit es nicht mehr auswählbar ist
-                if (SortComboBox.Items.Count > 0 && SortComboBox.Items[0] is ComboBoxItem placeholder && !placeholder.IsEnabled)
-                {
-                    SortComboBox.Items.RemoveAt(0);
-                }
-
-                // ComboBox neu auf ausgewähltes Item setzen (optional)
-                // SortComboBox.SelectedItem = null;  // falls du möchtest, dass keine Auswahl sichtbar bleibt
+        private void RefreshCompanies(List<Unternehmen> sortedList)
+        {
+            // Wir leeren die Liste und fügen sie neu sortiert hinzu
+            // Das triggert die UI-Aktualisierung im MainWindow
+            Companies.Clear();
+            foreach (var c in sortedList)
+            {
+                Companies.Add(c);
             }
         }
+
         private void OpenBewerbungen_Click(object sender, RoutedEventArgs e)
         {
             try

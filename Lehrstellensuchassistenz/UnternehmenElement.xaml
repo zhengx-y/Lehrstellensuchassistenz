@@ -3,8 +3,13 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="clr-namespace:Lehrstellensuchassistenz"
     Title="UnternehmenElement">
+    <Page.Resources>
+        <local:RichTextBoxEmptyToVisibilityConverter x:Key="RichTextBoxEmptyToVisibilityConverter"/>
+    </Page.Resources>
 
-    <Grid Background="{StaticResource BackgroundBrush}">
+    <Grid Background="{StaticResource BackgroundBrush}" 
+      Focusable="True" 
+      MouseDown="Grid_MouseDown">
 
         <!-- ROWS -->
         <Grid.RowDefinitions>
@@ -33,7 +38,10 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Name:" FontSize="25" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" FontSize="25"/>
+                <TextBox Grid.Column="1" 
+         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
+         FontSize="25" 
+         TextChanged="MarkAsChanged"/>
             </Grid>
 
             <!-- Website mit Öffnen-Button -->
@@ -44,7 +52,11 @@
                     <ColumnDefinition Width="40"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Link:" FontSize="20" VerticalAlignment="Center"/>
-                <TextBox Grid.Column="1" Text="{Binding Website, UpdateSourceTrigger=PropertyChanged}" FontSize="20" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" 
+         Text="{Binding Website, UpdateSourceTrigger=PropertyChanged}" 
+         FontSize="20" 
+         VerticalAlignment="Center" 
+         TextChanged="MarkAsChanged"/>
                 <Button Grid.Column="2" Width="30" Height="30" Margin="5,0,0,0" Content="↗" ToolTip="Link öffnen" Click="OpenLink_Click"/>
             </Grid>
 
@@ -55,60 +67,48 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Status:" FontSize="20" VerticalAlignment="Center"/>
-                <ComboBox Grid.Column="1" SelectedItem="{Binding BewerbungsStatus, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Width="200" ItemsSource="{x:Static local:StatusValues.All}">
+                <ComboBox Grid.Column="1" 
+          SelectedValue="{Binding BewerbungsStatus, UpdateSourceTrigger=PropertyChanged}" 
+          SelectedValuePath="."
+          HorizontalAlignment="Left" 
+          Width="200" 
+          ItemsSource="{x:Static local:StatusValues.All}"
+          SelectionChanged="MarkAsChanged">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding}" FontSize="15" Padding="3">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Style.Triggers>
-                                            <!-- Unbeworben -->
                                             <DataTrigger Binding="{Binding}" Value="Unbeworben">
-                                                <DataTrigger.Setters>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                    <Setter Property="Background" Value="Gray"/>
-                                                </DataTrigger.Setters>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="Background" Value="{StaticResource WartendBrush}"/>
                                             </DataTrigger>
 
-                                            <!-- Beworben -->
                                             <DataTrigger Binding="{Binding}" Value="Beworben">
-                                                <DataTrigger.Setters>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                    <Setter Property="Background" Value="DarkBlue"/>
-                                                </DataTrigger.Setters>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="Background" Value="{StaticResource BeworbenBrush}"/>
                                             </DataTrigger>
 
-                                            <!-- Abgelehnt -->
                                             <DataTrigger Binding="{Binding}" Value="Abgelehnt">
-                                                <DataTrigger.Setters>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                    <Setter Property="Background" Value="DarkRed"/>
-                                                </DataTrigger.Setters>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="Background" Value="{StaticResource AbgelehntBrush}"/>
                                             </DataTrigger>
 
-                                            <!-- NächsteSchritte -->
                                             <DataTrigger Binding="{Binding}" Value="NächsteSchritte">
-                                                <DataTrigger.Setters>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                    <Setter Property="Background" Value="DarkOrange"/>
-                                                </DataTrigger.Setters>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="Background" Value="DarkOrange"/>
                                             </DataTrigger>
 
-                                            <!-- Praktikum -->
                                             <DataTrigger Binding="{Binding}" Value="Praktikum">
-                                                <DataTrigger.Setters>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                    <Setter Property="Background" Value="DarkGreen"/>
-                                                </DataTrigger.Setters>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="Background" Value="DarkGreen"/>
                                             </DataTrigger>
 
-                                            <!-- Angenommen -->
                                             <DataTrigger Binding="{Binding}" Value="Angenommen">
-                                                <DataTrigger.Setters>
-                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                    <Setter Property="Background" Value="#06B021"/>
-                                                </DataTrigger.Setters>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="Background" Value="{StaticResource AngenommenBrush}"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -145,7 +145,21 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <TextBlock Text="Notizen:" Margin="0,0,0,5" FontSize="20"/>
-                <TextBox Grid.Row="1" Text="{Binding Notizen, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="15"/>
+                <Grid Grid.Row="1">
+                    <RichTextBox x:Name="NotizenBox"
+             VerticalScrollBarVisibility="Auto"
+             TextChanged="NotizenBox_TextChanged"
+             PreviewKeyDown="NotizenBox_PreviewKeyDown"
+             FontSize="15"/>
+
+                    <TextBlock x:Name="PlaceholderText"
+           Text=" Hier kannst du Text und Bilder einfügen..."
+           Foreground="Gray"
+           Margin="5"
+           FontSize="15"
+           IsHitTestVisible="False"
+           Visibility="{Binding ElementName=NotizenBox, Path=Document, Converter={StaticResource RichTextBoxEmptyToVisibilityConverter}}"/>
+                </Grid>
             </Grid>
         </Border>
 

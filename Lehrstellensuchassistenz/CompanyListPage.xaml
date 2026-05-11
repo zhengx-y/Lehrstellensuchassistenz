@@ -7,18 +7,66 @@
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="CompanyListPage">
+    <Page.Resources>
+        <local:StatusToColorConverter x:Key="StatusToColorConverter"/>
+    </Page.Resources>
 
     <Grid>
-        <!-- ListBox -->
         <ListBox x:Name="CompanyListBox"
                  Margin="10"
                  Background="{StaticResource BackgroundBrush}"
                  BorderThickness="0"
                  HorizontalAlignment="Stretch"
                  VerticalAlignment="Stretch"
-                 FontSize="80"
                  Padding="5"
                  MouseDoubleClick="CompanyListBox_MouseDoubleClick"
-                 DisplayMemberPath="Name"/>
+                 HorizontalContentAlignment="Stretch">
+
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="{Binding BewerbungsStatus, Converter={StaticResource StatusToColorConverter}}" 
+                CornerRadius="8" 
+                Margin="5" 
+                Padding="15">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="{Binding Name}" 
+                           FontSize="30" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           VerticalAlignment="Center"/>
+
+                            <StackPanel Grid.Column="1" 
+                            VerticalAlignment="Center" 
+                            Margin="20,0,10,0" 
+                            Opacity="0.7">
+                                <TextBlock Text="Zuletzt geändert:" 
+                               FontSize="10" 
+                               Foreground="White" 
+                               HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding ZuletztGeaendert, StringFormat={}{0:dd.MM.yy HH:mm}}" 
+                               FontSize="14" 
+                               FontWeight="SemiBold"
+                               Foreground="White" 
+                               HorizontalAlignment="Right"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="2" 
+                           Text="{Binding BewerbungsStatus}" 
+                           FontSize="18" 
+                           Foreground="White" 
+                           Opacity="0.9"
+                           VerticalAlignment="Center" 
+                           Margin="10,0,0,0"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Grid>
 </Page>

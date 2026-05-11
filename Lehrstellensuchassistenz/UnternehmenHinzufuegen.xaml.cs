@@ -17,7 +17,7 @@ namespace Lehrstellensuchassistenz
             {
                 Name = InputTextBox.Text,
                 Website = null,
-                Notizen = null,
+                NotizenXaml = null,
                 FotoReferenz = null,
                 BewerbungsStatus = Status.Unbeworben
             };

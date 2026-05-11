@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lehrstellensuchassistenz"
         mc:Ignorable="d"
-        Title="Lehrstellensuchassistenz v1.1.0"
+        Title="Lehrstellensuchassistenz v1.2.0"
         Height="720"
         Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown">
@@ -47,7 +47,23 @@
 
                 <!-- Right Buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <ComboBox x:Name="SortComboBox"
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,15,0">
+                    <CheckBox x:Name="CheckAbgelehnt" 
+                  Content="Abgelehnt nach unten" 
+                  FontSize="12"
+                  Click="SortTrigger_Click"/>
+                    <CheckBox x:Name="CheckKeineAntwort" 
+                  Content="Keine Antwort nach unten" 
+                  FontSize="12"
+                  Click="SortTrigger_Click"/>
+                    <CheckBox x:Name="CheckUnbeworbenOben" 
+                  Content="Unbeworben ganz nach oben" 
+                  FontSize="12"
+                  Click="SortTrigger_Click"/>
+                </StackPanel>
+                    
+                <ComboBox x:Name="SortComboBox"
           Width="160" Height="40" Margin="0,0,10,0"
           SelectionChanged="SortComboBox_SelectionChanged"
           HorizontalContentAlignment="Left"
@@ -61,7 +77,10 @@
                         <!-- Name -->
                         <ComboBoxItem Content="Name A→Z" Tag="NameAsc"/>
                         <ComboBoxItem Content="Name Z→A" Tag="NameDesc"/>
-                    </ComboBox>
+
+                        <ComboBoxItem Content="Zuletzt geändert (Neu zuerst)" Tag="EditDesc"/>
+                        <ComboBoxItem Content="Zuletzt geändert (Alt zuerst)" Tag="EditAsc"/>
+                </ComboBox>
 
                     <Button Content="Unternehmen hinzufügen" Width="150" Height="40" Click="AddCompany_Click"/>
                 </StackPanel>

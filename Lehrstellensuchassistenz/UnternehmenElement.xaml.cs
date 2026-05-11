@@ -4,6 +4,10 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Text;
+using System.Windows.Documents;
+using System.Windows.Media;
+using System.Windows.Input;
 
 namespace Lehrstellensuchassistenz
 {
@@ -13,27 +17,44 @@ namespace Lehrstellensuchassistenz
 
         private const string RegistryKeyPath = @"SOFTWARE\Lehrstellensuchassistenz";
         private const string WelcomeShownValue = "UnternehmenElementWelcomeShown";
+        private bool _isInitializing = true;
 
         public UnternehmenElement(Unternehmen company)
         {
             InitializeComponent();
+            isUpdating = true;
+
             Company = company;
             this.DataContext = Company;
+            Loaded += UnternehmenElement_Loaded;
 
-            // 🔹 Popup beim ersten Start
             ShowWelcomePopupIfNeeded();
-
-            // 🔹 Foto laden
             LoadPhoto();
 
-            // 🔹 PropertyChanged speichern
-            Company.PropertyChanged += (s, e) =>
+            this.Unloaded += (s, e) => SaveBeforeLeave();
+
+            // Ganz wichtig: Nach dem Initial-Load alles auf "sauber" setzen
+            isUpdating = false;
+            ResetDirtyFlag();
+            _isInitializing = false;
+        }
+
+        // Diese Methode wird aufgerufen, wenn man von der Seite wegnavigiert
+        public void SaveBeforeLeave()
+        {
+            // 1. Notizen aus der RichTextBox ins Model übertragen
+            SyncNotizenToModel();
+
+            // 2. Alles zentral speichern
+            if (Application.Current.MainWindow is MainWindow main)
             {
-                if (Application.Current.MainWindow is MainWindow main)
-                {
-                    main.SaveCompanies();
-                }
-            };
+                main.SaveCompanies();
+            }
+        }
+
+        private void UnternehmenElement_Loaded(object sender, RoutedEventArgs e)
+        {
+            LoadNotizen();
         }
 
         private void ShowWelcomePopupIfNeeded()
@@ -56,7 +77,8 @@ namespace Lehrstellensuchassistenz
 
 🔹 Mitte: Notizen
 
-🔹 Unten links: Wenn alle Felder ausgefüllt sind, inklusive hochgeladenem Foto, erscheint der Button: Bewerben! / Schreiben fortsetzen
+🔹 Unten links: Wenn alle Felder au
+sgefüllt sind, inklusive hochgeladenem Foto, erscheint der Button: Bewerben! / Schreiben fortsetzen
 
 🔹 Unten rechts: Bewerbungstipps / Lebenslauftipps",
                         FontSize = 18,
@@ -112,17 +134,36 @@ namespace Lehrstellensuchassistenz
                 try
                 {
                     var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(Company.FotoReferenz);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-
+                    using (var stream = File.OpenRead(Company.FotoReferenz))
+                    {
+                        bitmap.BeginInit();
+                        bitmap.StreamSource = stream;
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                    }
+                    bitmap.Freeze(); // Macht das Bild thread-sicher und performanter
                     PhotoPreview.Source = bitmap;
                     PhotoPlaceholderText.Visibility = Visibility.Collapsed;
                 }
-                catch
+                catch { Company.FotoReferenz = null; }
+            }
+        }
+
+        private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // Wir prüfen, ob die Quelle des Klicks das Grid selbst oder ein passives Element ist
+            if (e.OriginalSource == sender || e.OriginalSource is Image || e.OriginalSource is StackPanel || e.OriginalSource is Border)
+            {
+                // 1. Fokus aus der aktuellen TextBox/RichTextBox entfernen
+                Keyboard.ClearFocus();
+
+                // 2. Den Fokus explizit auf das Hauptfenster setzen
+                var mainWindow = Window.GetWindow(this);
+                if (mainWindow != null)
                 {
-                    Company.FotoReferenz = null;
+                    mainWindow.Focus();
+                    // Optional: Den Fokus auf das Fenster-Element erzwingen
+                    FocusManager.SetFocusedElement(mainWindow, mainWindow);
                 }
             }
         }
@@ -283,8 +324,12 @@ namespace Lehrstellensuchassistenz
 
                     Company.FotoReferenz = dialog.FileName;
 
+                    MarkAsChanged(sender, e);
+
                     if (Application.Current.MainWindow is MainWindow main)
                     {
+                        // WICHTIG: Erst Notizen sichern, dann die ganze Liste speichern
+                        SyncNotizenToModel();
                         main.SaveCompanies();
                     }
                 }
@@ -292,6 +337,161 @@ namespace Lehrstellensuchassistenz
                 {
                     MessageBox.Show("Ungültige oder beschädigte Bilddatei ❌");
                 }
+            }
+        }
+
+        private bool isUpdating = false;
+
+        public void SyncNotizenToModel()
+        {
+            if (isUpdating) return;
+
+            try
+            {
+                isUpdating = true;
+                if (DataContext is Unternehmen u)
+                {
+                    TextRange range = new TextRange(
+                        NotizenBox.Document.ContentStart,
+                        NotizenBox.Document.ContentEnd);
+
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        range.Save(ms, DataFormats.Rtf);
+                        u.NotizenXaml = Encoding.UTF8.GetString(ms.ToArray());
+                    }
+                }
+            }
+            finally
+            {
+                isUpdating = false;
+            }
+        }
+
+        public void LoadNotizen()
+        {
+            if (DataContext is Unternehmen u && !string.IsNullOrEmpty(u.NotizenXaml))
+            {
+                isUpdating = true;
+
+                TextRange range = new TextRange(
+                    NotizenBox.Document.ContentStart,
+                    NotizenBox.Document.ContentEnd);
+
+                using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(u.NotizenXaml)))
+                {
+                    range.Load(ms, DataFormats.Rtf);
+                }
+
+                isUpdating = false;
+            }
+        }
+
+        private void NotizenBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                if (Clipboard.ContainsImage())
+                {
+                    e.Handled = true;
+
+                    // 1. Zeile DAVOR (erzwingen)
+                    NotizenBox.CaretPosition.InsertLineBreak();
+                    NotizenBox.CaretPosition = NotizenBox.CaretPosition.GetNextInsertionPosition(LogicalDirection.Forward)
+                                                ?? NotizenBox.CaretPosition;
+
+                    // 2. BILD EINFÜGEN
+                    NotizenBox.Paste();
+                    ScaleLastInsertedImage(500);
+
+                    // 3. ZEILE DANACH (Der entscheidende Teil)
+                    // Wir holen uns die Position direkt NACH dem eingefügten Bild-Container
+                    TextPointer nachBild = NotizenBox.CaretPosition.GetNextInsertionPosition(LogicalDirection.Forward);
+
+                    if (nachBild != null)
+                    {
+                        // Cursor hinter das Bild setzen
+                        NotizenBox.CaretPosition = nachBild;
+
+                        // Jetzt den Umbruch machen
+                        NotizenBox.CaretPosition.InsertLineBreak();
+
+                        // Cursor in die neue leere Zeile setzen
+                        NotizenBox.CaretPosition = NotizenBox.CaretPosition.GetNextInsertionPosition(LogicalDirection.Forward)
+                                                    ?? NotizenBox.Document.ContentEnd;
+                    }
+                    else
+                    {
+                        // Fallback, falls GetNextInsertionPosition fehlschlägt
+                        NotizenBox.CaretPosition.InsertLineBreak();
+                        NotizenBox.CaretPosition = NotizenBox.Document.ContentEnd;
+                    }
+
+                    NotizenBox.Focus();
+                }
+            }
+        }
+
+        private void ScaleLastInsertedImage(double maxWidth)
+        {
+            // Dokument von hinten durchsuchen
+            foreach (var block in NotizenBox.Document.Blocks.Reverse())
+            {
+                if (block is Paragraph p)
+                {
+                    foreach (var inline in p.Inlines.Reverse())
+                    {
+                        if (inline is InlineUIContainer container && container.Child is Image img)
+                        {
+                            // 1. Breite limitieren
+                            img.Width = maxWidth;
+
+                            // 2. WICHTIG: Höhe auf Auto setzen, damit kein leerer Platz bleibt
+                            img.Height = double.NaN;
+
+                            // 3. Stretch-Modus sicherstellen
+                            img.Stretch = Stretch.Uniform;
+
+                            // 4. Den Container zwingen, sich an das Bild anzupassen
+                            container.BaselineAlignment = BaselineAlignment.Bottom;
+
+                            // Layout-Update für dieses spezifische Bild erzwingen
+                            img.UpdateLayout();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        public bool IsDirty { get; private set; } = false;
+        private void MarkAsChanged(object sender, EventArgs e)
+        {
+            if (isUpdating || _isInitializing) return;
+
+            // Nur markieren, wenn der Nutzer wirklich gerade mit dem Element interagiert
+            if (sender is Control c && (c.IsFocused || c.IsKeyboardFocusWithin))
+            {
+                this.IsDirty = true;
+                Company.ZuletztGeaendert = DateTime.Now; // Hier direkt den Zeitstempel setzen!
+            }
+        }
+
+        public void ResetDirtyFlag()
+        {
+            IsDirty = false;
+        }
+
+        private void NotizenBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // 1. UI Logik (Placeholder) immer ausführen
+            var text = new TextRange(NotizenBox.Document.ContentStart, NotizenBox.Document.ContentEnd).Text;
+            PlaceholderText.Visibility = string.IsNullOrWhiteSpace(text) ? Visibility.Visible : Visibility.Hidden;
+
+            // 2. Dirty-Logik nur, wenn wir NICHT laden UND der User wirklich drin tippt
+            if (!isUpdating && !_isInitializing && NotizenBox.IsFocused)
+            {
+                MarkAsChanged(sender, e);
             }
         }
     }

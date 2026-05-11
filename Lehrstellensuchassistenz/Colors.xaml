@@ -5,5 +5,9 @@
     <SolidColorBrush x:Key="PrimaryBrush" Color="#3A7AFE"/>
     <SolidColorBrush x:Key="BackgroundBrush" Color="#F5F7FA"/>
     <SolidColorBrush x:Key="TextBrush" Color="#1E1E1E"/>
+    <SolidColorBrush x:Key="AngenommenBrush" Color="#06B021"/>
+    <SolidColorBrush x:Key="AbgelehntBrush" Color="#8B0000"/>
+    <SolidColorBrush x:Key="BeworbenBrush" Color="#00008B"/>
+    <SolidColorBrush x:Key="WartendBrush" Color="Gray"/>
 
 </ResourceDictionary>

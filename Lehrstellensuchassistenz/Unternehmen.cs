@@ -60,17 +60,16 @@ namespace Lehrstellensuchassistenz
             {
                 status = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(KannSichBewerben)); // Optional, falls Status Einfluss haben soll
             }
         }
 
-        private string? notizen;
-        public string? Notizen
+        private string? notizenXaml;
+        public string? NotizenXaml
         {
-            get => notizen;
+            get => notizenXaml;
             set
             {
-                notizen = value;
+                notizenXaml = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(KannSichBewerben));
             }
@@ -84,7 +83,6 @@ namespace Lehrstellensuchassistenz
             {
                 fotoReferenz = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(KannSichBewerben));
             }
         }
 
@@ -105,7 +103,18 @@ namespace Lehrstellensuchassistenz
         public DateTime ErstellDatum
         {
             get => erstellDatum;
-            set { erstellDatum = value; OnPropertyChanged(); }
+            set
+            {
+                erstellDatum = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ErstellDatumMitZeit));
+            }
+        }
+
+        public DateTime ZuletztGeaendert { get; set; } = DateTime.Now;
+        public void AktualisiereZeitstempel()
+        {
+            ZuletztGeaendert = DateTime.Now;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -117,7 +126,6 @@ namespace Lehrstellensuchassistenz
         public bool KannSichBewerben =>
             !string.IsNullOrWhiteSpace(Name) &&
             !string.IsNullOrWhiteSpace(Website) &&
-            !string.IsNullOrWhiteSpace(Notizen) &&
-            !string.IsNullOrWhiteSpace(FotoReferenz);
+            !string.IsNullOrWhiteSpace(NotizenXaml);
     }
 }
