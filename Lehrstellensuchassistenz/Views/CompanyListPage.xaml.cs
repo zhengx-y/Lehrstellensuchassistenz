@@ -57,5 +57,14 @@ namespace Lehrstellensuchassistenz.Views
                 }
             }
         }
+
+        private void SelectionCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            // Greift auf das MainWindow zu und triggert den Check
+            if (Application.Current.MainWindow is MainWindow mw)
+            {
+                mw.UpdateSelectionVisibility();
+            }
+        }
     }
 }

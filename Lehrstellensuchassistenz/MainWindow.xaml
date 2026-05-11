@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="Lehrstellensuchassistenz v2.1.0"
         Height="720" Width="1280"
-        PreviewKeyDown="Window_PreviewKeyDown">
+        PreviewKeyDown="Window_PreviewKeyDown"
+        WindowState="Maximized">
 
     <Window.Resources>
         <ScaleTransform x:Key="TopScale" ScaleX="1" ScaleY="1"/>
@@ -36,16 +37,19 @@
 
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
 
-                <Button Content="Auswahl aufheben" 
-            Width="120" Height="40" 
+                <Button Content="Markierte löschen" 
+            Width="130" Height="40" 
             Margin="0,0,10,0" 
-            Click="ClearSelection_Click"
-            Background="#CFD8DC"/>
+            Click="BulkDelete_Click" 
+            Background="#E57373"/>
 
-                <Button Content="Markierte löschen" Width="130" Height="40" Margin="0,0,10,0" 
-            Click="BulkDelete_Click" Background="#E57373"/>
+                <StackPanel x:Name="SelectionActionGroup" Orientation="Horizontal" Visibility="Collapsed">
+                    <Button Content="Auswahl aufheben" 
+                Width="120" Height="40" 
+                Margin="0,0,10,0" 
+                Click="ClearSelection_Click"
+                Background="#CFD8DC"/>
 
-                <StackPanel x:Name="MultiSelectActions" Orientation="Horizontal">
                     <ComboBox x:Name="BulkStatusCombo" Width="150" Height="40" 
                   SelectionChanged="BulkStatus_Changed"
                   ItemsSource="{Binding Source={StaticResource StatusEnumValues}}"

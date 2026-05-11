@@ -37,6 +37,7 @@ namespace Lehrstellensuchassistenz
 
             this.Loaded += MainWindow_Loaded;
             MainFrame.Navigated += MainFrame_Navigated;
+            this.AddHandler(CheckBox.ClickEvent, new RoutedEventHandler(OnAnyCheckBoxClicked));
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -191,6 +192,8 @@ namespace Lehrstellensuchassistenz
         {
             foreach (var company in Companies) company.IsSelectedForAction = false;
             if (MainFrame.Content is CompanyListPage listPage) listPage.CompanyListBox.Items.Refresh();
+
+            UpdateSelectionVisibility();
         }
 
         private void BulkDelete_Click(object sender, RoutedEventArgs e)
@@ -213,7 +216,12 @@ namespace Lehrstellensuchassistenz
             }
         }
 
-        private void FinishBulkChange() { SaveAllData(); ApplySorting(); }
+        private void FinishBulkChange()
+        {
+            SaveAllData();
+            ApplySorting();
+            UpdateSelectionVisibility();
+        }
 
         private void BulkStatus_Changed(object sender, SelectionChangedEventArgs e)
         {
@@ -223,6 +231,28 @@ namespace Lehrstellensuchassistenz
                 BulkStatusCombo.SelectedIndex = -1;
                 FinishBulkChange();
             }
+        }
+
+        public void UpdateSelectionVisibility()
+        {
+            var selectedCount = Companies.Count(x => x.IsSelectedForAction);
+
+            if (selectedCount > 0)
+            {
+                SelectionActionGroup.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                SelectionActionGroup.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void OnAnyCheckBoxClicked(object sender, RoutedEventArgs e)
+        {
+            // Wir warten ganz kurz, bis das Binding das Model aktualisiert hat
+            Dispatcher.BeginInvoke(new Action(() => {
+                UpdateSelectionVisibility();
+            }), System.Windows.Threading.DispatcherPriority.Background);
         }
         #endregion
     }
