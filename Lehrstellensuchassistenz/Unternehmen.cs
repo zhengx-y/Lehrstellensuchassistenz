@@ -3,18 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Lehrstellensuchassistenz
 {
-    public class Unternehmen
-    {
-        public string? Name { get; set; }
-        public string? Website { get; set; }
-        public Status BewerbungsStatus { get; set; }
-        public string? Notizen { get; set; }
-        public string? FotoReferenz { get; set; }
-    }
-
     public enum Status
     {
         Unbeworben,
@@ -23,5 +16,44 @@ namespace Lehrstellensuchassistenz
         Abgelehnt,
         NächsteSchritte,
         Praktikum
+    }
+
+    // Hilfsklasse für ComboBox ItemsSource
+    public static class StatusValues
+    {
+        public static Array All => Enum.GetValues(typeof(Status));
+    }
+
+    // Unternehmen-Klasse
+    public class Unternehmen : INotifyPropertyChanged
+    {
+        private string? name;
+        public string? Name { get => name; set { name = value; OnPropertyChanged(); } }
+
+        private string? website;
+        public string? Website { get => website; set { website = value; OnPropertyChanged(); } }
+
+        private Status status;
+        public Status BewerbungsStatus { get => status; set { status = value; OnPropertyChanged(); } }
+
+        private string? notizen;
+        public string? Notizen { get => notizen; set { notizen = value; OnPropertyChanged(); } }
+
+        private string? fotoReferenz;
+        public string? FotoReferenz { get => fotoReferenz; set { fotoReferenz = value; OnPropertyChanged(); } }
+
+        private DateTime erstellDatum = DateTime.Now;
+        public DateTime ErstellDatum
+        {
+            get => erstellDatum;
+            set { erstellDatum = value; OnPropertyChanged(); }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

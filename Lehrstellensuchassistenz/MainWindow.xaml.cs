@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace Lehrstellensuchassistenz
@@ -46,7 +47,7 @@ namespace Lehrstellensuchassistenz
             }
         }
 
-        private void SaveCompanies()
+        public void SaveCompanies()
         {
             var options = new JsonSerializerOptions
             {
@@ -138,10 +139,68 @@ namespace Lehrstellensuchassistenz
                 }
             }
         }
-        
-        private void Sort_Click(object sender, RoutedEventArgs e)
+        private void Sort_Click(object sender, RoutedEventArgs e) // NUR PLATZHALTER
         {
             MessageBox.Show("Button funktioniert!");
+        }
+
+        // Sortieren nach Datum
+        private void SortByDate(bool ascending = true)
+        {
+            var sorted = ascending
+                ? Companies.OrderBy(c => c.ErstellDatum).ToList()
+                : Companies.OrderByDescending(c => c.ErstellDatum).ToList();
+
+            Companies.Clear();
+            foreach (var c in sorted)
+                Companies.Add(c);
+        }
+
+        // Sortieren nach Name (Anfangsbuchstabe)
+        private void SortByName(bool ascending = true)
+        {
+            var sorted = ascending
+                ? Companies.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList()
+                : Companies.OrderByDescending(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+            Companies.Clear();
+            foreach (var c in sorted)
+                Companies.Add(c);
+        }
+
+        // ComboBox SelectionChanged
+        private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SortComboBox.SelectedItem is ComboBoxItem item)
+            {
+                // Ignoriere den Platzhalter
+                if (item.IsEnabled == false) return;
+
+                string? tag = item.Tag?.ToString();
+                bool ascending = tag?.EndsWith("Asc") == true;
+
+                switch (tag)
+                {
+                    case "DateAsc":
+                    case "DateDesc":
+                        SortByDate(ascending);
+                        break;
+
+                    case "NameAsc":
+                    case "NameDesc":
+                        SortByName(ascending);
+                        break;
+                }
+
+                // Platzhalter „Sortieren“ entfernen, damit es nicht mehr auswählbar ist
+                if (SortComboBox.Items.Count > 0 && SortComboBox.Items[0] is ComboBoxItem placeholder && !placeholder.IsEnabled)
+                {
+                    SortComboBox.Items.RemoveAt(0);
+                }
+
+                // ComboBox neu auf ausgewähltes Item setzen (optional)
+                // SortComboBox.SelectedItem = null;  // falls du möchtest, dass keine Auswahl sichtbar bleibt
+            }
         }
     }
 }
