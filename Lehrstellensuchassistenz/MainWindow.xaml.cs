@@ -1,708 +1,243 @@
-﻿using Lehrstellensuchassistenz;
-using Microsoft.Win32;
+﻿using Lehrstellensuchassistenz.Models;
+using Lehrstellensuchassistenz.Services;
+using Lehrstellensuchassistenz.Views;
+using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
-using IWshRuntimeLibrary;
-using System.Linq;
 
 namespace Lehrstellensuchassistenz
 {
     public partial class MainWindow : Window
     {
-        // zentrale Datenquelle für alle Pages
-        public ObservableCollection<Unternehmen> Companies { get; } = new ObservableCollection<Unternehmen>();
-        private readonly string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lehrstellensuchassistenz", "companies.json");
+        // Zentrale Datenliste
+        public ObservableCollection<Company> Companies { get; } = new ObservableCollection<Company>();
+
+        private readonly FileService _fileService = new FileService();
+        public readonly CompanyService CompanyService;
+        public readonly NavigationService NavigationService;
+        private readonly UIService _uiService = new UIService();
+
+        // NEU: ShortcutService Instanz
+        private ShortcutService _shortcutService;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+            // Initialisierung der Services
+            CompanyService = new CompanyService(Companies);
+            NavigationService = new NavigationService(MainFrame);
 
-            LoadCompanies();
-            MainFrame.Navigate(new CompanyListPage(Companies));
-            CheckDesktopShortcut();
-            ShowWelcomePopup();
+            // NEU: ShortcutService initialisieren
+            _shortcutService = new ShortcutService(this);
+
+            LoadAllData();
+
+            // Startseite: Die Liste aller Firmen anzeigen
+            NavigationService.NavigateTo(new CompanyListPage(Companies));
+
+            // NEU: Wir abonnieren das Loaded-Event, um Popups nach dem Rendern anzuzeigen
+            this.Loaded += MainWindow_Loaded;
         }
 
-        private const string RegistryKeyPath = @"SOFTWARE\Lehrstellensuchassistenz";
-        private const string RegistryValueName = "DesktopShortcutAsked";
-
-        private void CheckDesktopShortcut()
+        // NEU: Hier werden die Popups beim Start getriggert
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
-            object? value = key?.GetValue(RegistryValueName);
+            // 1. Prüfen ob Verknüpfung erstellt werden soll
+            _shortcutService.CheckDesktopShortcut();
 
-            if (value == null) // Noch nie gefragt
-            {
-                var result = MessageBox.Show(
-                    "Soll eine Verknüpfung auf dem Desktop erstellt werden?",
-                    "Verknüpfung erstellen",
-                    MessageBoxButton.YesNoCancel,
-                    MessageBoxImage.Question
-                );
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    CreateDesktopShortcut();
-                    key?.SetValue(RegistryValueName, "Yes"); // gemerkt
-                }
-                else if (result == MessageBoxResult.No)
-                {
-                    key?.SetValue(RegistryValueName, "No"); // gemerkt
-                }
-                // Cancel → nichts speichern, nächstes Mal wieder fragen
-            }
+            // 2. Willkommens-Anleitung zeigen
+            _shortcutService.ShowWelcomePopup();
         }
 
-        private const string WelcomeShownValue = "WelcomeShown";
-
-        private void ShowWelcomePopup()
+        #region Speichern & Laden
+        // ... (Dein restlicher Code bleibt gleich) ...
+        private void LoadAllData()
         {
-            this.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                using var key = Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
-                object? value = key?.GetValue(WelcomeShownValue);
-
-                if (value == null)
-                {
-                    // TextBlock für den Popup-Inhalt
-                    var textBlock = new TextBlock
-                    {
-                        Text = @"Willkommen bei der Lehrstellensuchassistenz!
-Oben findest du die wichtigsten Buttons:
-- 'Zurück': Navigiert zur vorherigen Seite
-- 'Alle Änderungen bisher speichern': Speichert alle aktuellen Änderungen
-- 'Ausgewähltes Element löschen': Löscht die aktuell ausgewählte Firma
-
-Rechts oben:
-- 'Sortieren' ComboBox: Sortiert Firmen nach Name oder Datum
-- 'Unternehmen hinzufügen': Öffnet das Formular, um eine neue Firma hinzuzufügen
-
-Links in der Sidebar:
-- 'Lebenslauf': Hier kannst du dein Lebenslauf-PDF hochladen und später öffnen
-- 'Bewerbungen': Öffnet den Bewerbungsordner
-- AMS, karriere.at, WKO, lehrstelle.at, lehrstellenportal.at, DevJobs: Öffnet die jeweiligen Webseiten
-- 'Einstellungen': Platzhalter-Button für zukünftige Optionen
-
-Im Hauptbereich:
-- Du kannst alle deine gespeicherten Unternehmen bearbeiten
-
-Die Ansicht kann mit Strg + Mausrad gezoomt werden.",
-                        FontSize = 18,
-                        TextWrapping = TextWrapping.Wrap,
-                        Margin = new Thickness(20)
-                    };
-
-                    // OK-Button
-                    var closeButton = new Button
-                    {
-                        Content = "OK",
-                        Width = 120,
-                        Height = 40,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 15, 0, 15),
-                        FontSize = 16,
-                        FontWeight = FontWeights.SemiBold
-                    };
-
-                    // Popup-Fenster
-                    var popup = new Window
-                    {
-                        Title = "Willkommen!",
-                        SizeToContent = SizeToContent.Height, // Höhe passt sich Text + Button an
-                        Width = 700,                          // feste Breite
-                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                        Owner = this,
-                        ResizeMode = ResizeMode.NoResize,
-                        Content = new StackPanel
-                        {
-                            Children =
-                    {
-                        textBlock,
-                        closeButton
-                    }
-                        }
-                    };
-
-                    closeButton.Click += (s, e) => popup.Close();
-
-                    popup.ShowDialog();
-
-                    key?.SetValue(WelcomeShownValue, "Yes");
-                }
-            }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var loaded = _fileService.Load();
+            Companies.Clear();
+            foreach (var c in loaded) Companies.Add(c);
+            ApplySorting();
         }
 
-        private void CreateDesktopShortcut()
+        public void SaveAllData()
         {
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-            string shortcutLocation = Path.Combine(desktopPath, "Lehrstellensuchassistenz.lnk");
-
-            string exePath = Process.GetCurrentProcess().MainModule!.FileName;
-
-            // Pfad zum Icon in deinem Projekt-Ordner
-            string projectFolder = Path.GetDirectoryName(exePath)!;
-            string iconPath = Path.Combine(projectFolder, "resources", "images", "shortcut_icon.ico");
-
-            if (!System.IO.File.Exists(iconPath))
+            if (MainFrame.Content is CompanyElement detailPage)
             {
-                MessageBox.Show("Icon-Datei nicht gefunden: " + iconPath);
-                iconPath = exePath; // Fallback auf EXE-Icon
+                detailPage.SyncNotizenToModel();
             }
 
-            // WshShell Shortcut erstellen
-            WshShell shell = new WshShell();
-            IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutLocation);
-            shortcut.Description = "Lehrstellensuchassistenz";
-            shortcut.TargetPath = exePath;
-            shortcut.WorkingDirectory = Path.GetDirectoryName(exePath);
-            shortcut.IconLocation = iconPath; // Eigenes Icon
-            shortcut.Save();
+            _fileService.Save(Companies);
         }
 
+        private void SaveAllData_Click(object sender, RoutedEventArgs e)
+        {
+            SaveAllData();
+            MessageBox.Show("Alle Änderungen wurden sicher gespeichert!", "Speichern", MessageBoxButton.OK, MessageBoxImage.Information);
+            ApplySorting();
+        }
+        #endregion
+
+        #region Hotkeys & UI-Zoom
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // Strg+S
-            if (e.Key == Key.S && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S)
             {
-                SaveCompanies();
-                MessageBox.Show("Alle Änderungen wurden gespeichert!");
+                SaveAllData();
+                ApplySorting();
                 e.Handled = true;
             }
 
-            // Delete-Taste
-            if (e.Key == Key.Delete)
+            if (e.Key == Key.Delete && !IsUserTyping())
             {
-                // Wir prüfen, ob der Fokus gerade in einer TextBox oder RichTextBox liegt
-                if (FocusManager.GetFocusedElement(this) is TextBox ||
-                    FocusManager.GetFocusedElement(this) is RichTextBox)
-                {
-                    // Wir tun NICHTS und lassen die Taste zur Textbox durchgehen
-                    return;
-                }
-
-                // Wenn kein Eingabefeld fokussiert ist, führen wir das Firmen-Löschen aus
-                Delete_Click(sender, new RoutedEventArgs());
+                DeleteCompany_Click(this, new RoutedEventArgs());
                 e.Handled = true;
+            }
+
+            if (e.Key == Key.Escape)
+            {
+                if (MainFrame.Content is CompanyElement)
+                {
+                    NavigateBack_Click(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
             }
         }
-
-        // Globale Variable in deiner MainWindow-Klasse
-        private int zoomLevel = 0;       // Default 0
-        private const int zoomMin = 0;   // 0 = Standardgröße
-        private const int zoomMax = 4;   // 4 Schritte maximal
 
         private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+            if (Keyboard.Modifiers == ModifierKeys.Control)
             {
-                if (e.Delta > 0 && zoomLevel < zoomMax)
-                {
-                    zoomLevel++;
-                    ZoomUI(1.1);  // 10% vergrößern
-                }
-                else if (e.Delta < 0 && zoomLevel > zoomMin)
-                {
-                    zoomLevel--;
-                    ZoomUI(1 / 1.1);  // 10% verkleinern
-                }
-
+                double? factor = _uiService.GetZoomFactor(e.Delta);
+                if (factor.HasValue) ApplyZoom(factor.Value);
                 e.Handled = true;
             }
         }
 
-        private void ZoomUI(double zoomFactor)
+        private void ApplyZoom(double factor)
         {
-            // --- Top Bar ---
-            TopBarGrid.Margin = new Thickness(
-                TopBarGrid.Margin.Left * zoomFactor,
-                TopBarGrid.Margin.Top * zoomFactor,
-                TopBarGrid.Margin.Right * zoomFactor,
-                TopBarGrid.Margin.Bottom * zoomFactor
-            );
+            TopBarGrid.Margin = ScaleThickness(TopBarGrid.Margin, factor);
+            ScaleChildren(TopBarGrid, factor);
+            ScaleSidebar(factor);
+        }
 
-            foreach (var child in ((StackPanel)TopBarGrid.Children[0]).Children)
+        private Thickness ScaleThickness(Thickness old, double factor) =>
+            new Thickness(old.Left * factor, old.Top * factor, old.Right * factor, old.Bottom * factor);
+
+        private void ScaleChildren(Panel parent, double factor)
+        {
+            foreach (UIElement child in parent.Children)
             {
-                if (child is Button btn)
+                if (child is FrameworkElement fe)
                 {
-                    btn.Width *= zoomFactor;
-                    btn.Height *= zoomFactor;
-                    btn.FontSize *= zoomFactor; // Text mitzoomen
-                }
-            }
-
-            foreach (var child in ((StackPanel)TopBarGrid.Children[1]).Children)
-            {
-                if (child is Button btn)
-                {
-                    btn.Width *= zoomFactor;
-                    btn.Height *= zoomFactor;
-                    btn.FontSize *= zoomFactor;
-                }
-                else if (child is ComboBox cb)
-                {
-                    cb.Width *= zoomFactor;
-                    cb.Height *= zoomFactor;
-                    cb.FontSize *= zoomFactor; // Text in ComboBox
-                }
-            }
-
-            // --- Sidebar ---
-            SidebarScrollViewer.Width *= zoomFactor;
-
-            if (SidebarScrollViewer.Content is StackPanel sidebarPanel)
-            {
-                foreach (var child in sidebarPanel.Children)
-                {
-                    if (child is Button btn)
-                    {
-                        btn.Width *= zoomFactor;
-                        btn.Height *= zoomFactor;
-                        btn.FontSize *= zoomFactor; // Text mitzoomen
-                        btn.Margin = new Thickness(
-                            btn.Margin.Left * zoomFactor,
-                            btn.Margin.Top * zoomFactor,
-                            btn.Margin.Right * zoomFactor,
-                            btn.Margin.Bottom * zoomFactor
-                        );
-                    }
+                    if (!double.IsNaN(fe.Width)) fe.Width *= factor;
+                    if (!double.IsNaN(fe.Height)) fe.Height *= factor;
+                    fe.Margin = ScaleThickness(fe.Margin, factor);
+                    if (fe is Control ctrl) ctrl.FontSize *= factor;
+                    if (fe is TextBlock tb) tb.FontSize *= factor;
                 }
             }
         }
 
-        public void SaveCompanies()
+        private void ScaleSidebar(double factor)
         {
-            // 1. Falls wir in der Detailansicht sind...
-            if (MainFrame.Content is UnternehmenElement detailPage)
+            SidebarGrid.Width *= factor;
+            ScaleChildren(SidebarGrid, factor);
+        }
+        #endregion
+
+        #region Logik & Navigation
+        public void DeleteCompany_Click(object sender, RoutedEventArgs e)
+        {
+            Company? toDelete = null;
+            if (MainFrame.Content is CompanyListPage listPage) toDelete = listPage.SelectedCompany;
+            else if (MainFrame.Content is CompanyElement detailPage) toDelete = detailPage.Company;
+
+            if (toDelete != null && CompanyService.ConfirmAndDelete(toDelete))
             {
-                if (detailPage.IsDirty)
+                if (MainFrame.Content is CompanyElement)
                 {
-                    detailPage.SyncNotizenToModel();
-                    detailPage.Company?.AktualisiereZeitstempel();
-                    detailPage.ResetDirtyFlag(); // <-- Wieder auf "sauber" setzen
+                    NavigationService.NavigateTo(new CompanyListPage(Companies));
                 }
-            }
-
-            // 2. Tatsächliches Schreiben auf die Festplatte (wie gehabt)
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                Converters = { new JsonStringEnumConverter() }
-            };
-
-            try
-            {
-                string json = JsonSerializer.Serialize(Companies, options);
-                System.IO.File.WriteAllText(filePath, json);
-
-                // Optional: Nach dem Speichern die Liste neu sortieren, 
-                // damit das "Zuletzt geändert" sofort wirksam wird, wenn man zurückgeht.
+                SaveAllData();
                 ApplySorting();
             }
-            catch (Exception ex)
+        }
+
+        private bool IsUserTyping()
+        {
+            var focused = FocusManager.GetFocusedElement(this);
+            return focused is TextBox || focused is RichTextBox;
+        }
+
+        private void Quicklink_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string url)
             {
-                Debug.WriteLine("Fehler beim Speichern: " + ex.Message);
+                BrowserService.OpenUrl(url);
             }
         }
 
-        private void LoadCompanies()
+        private void Resume_Click(object sender, RoutedEventArgs e) => _fileService.OpenOrSelectResume();
+        private void OpenApplicationsFolder_Click(object sender, RoutedEventArgs e) => _fileService.OpenBewerbungenFolder();
+
+        private void NavigateBack_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                if (!System.IO.File.Exists(filePath))
-                {
-                    // Datei leer anlegen, falls nicht vorhanden
-                    System.IO.File.WriteAllText(filePath, "[]");
-                }
-
-                var options = new JsonSerializerOptions
-                {
-                    Converters = { new JsonStringEnumConverter() }
-                };
-
-                string json = System.IO.File.ReadAllText(filePath);
-                var loaded = JsonSerializer.Deserialize<ObservableCollection<Unternehmen>>(json, options);
-
-                if (loaded != null)
-                {
-                    foreach (var c in loaded)
-                        Companies.Add(c);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Fehler beim Speichern: " + ex.Message);
-            }
-        }
-
-        private void ReturnPage_Click(object sender, RoutedEventArgs e)
-        {
-            // Wir rufen SaveCompanies direkt auf. 
-            // Da SaveCompanies() oben bereits prüft, ob es ein UnternehmenElement ist 
-            // und SyncNotizenToModel() triggert, reicht dieser eine Aufruf!
-            SaveCompanies();
-
-            MainFrame.Navigate(new CompanyListPage(Companies));
-        }
-
-        // Im Konstruktor vom MainWindow oder über das Properties-Fenster (Closing-Event)
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
-            // Ein letztes Mal alles sichern
-            SaveCompanies();
-            base.OnClosing(e);
-        }
-
-        private void SaveCompanies_Click(object sender, RoutedEventArgs e)
-        {
-            // 1. Falls gerade ein Unternehmen-Detailbereich offen ist, Notizen synchronisieren
-            if (MainFrame.Content is UnternehmenElement detailSeite)
-            {
-                detailSeite.SyncNotizenToModel();
-            }
-
-            // 2. Jetzt erst wirklich speichern
-            SaveCompanies();
-
-            MessageBox.Show("Alle Änderungen wurden gespeichert!");
+            SaveAllData();
+            NavigationService.NavigateTo(new CompanyListPage(Companies));
         }
 
         private void AddCompany_Click(object sender, RoutedEventArgs e)
         {
-            UnternehmenHinzufuegen unternehmenHinzufuegen = new UnternehmenHinzufuegen();
-            unternehmenHinzufuegen.Owner = this;
-
-            bool? result = unternehmenHinzufuegen.ShowDialog();
-
-            if (result == true)
+            var dialog = new AddCompany { Owner = this };
+            if (dialog.ShowDialog() == true && dialog.Answer != null)
             {
-                Unternehmen? company = unternehmenHinzufuegen.Answer;
-
-                if (company != null && !string.IsNullOrWhiteSpace(company.Name))
-                {
-                    Companies.Add(company);
-                }
-                else
-                {
-                    MessageBox.Show("Die Firma hat keinen gültigen Namen.");
-                }
+                CompanyService.AddCompany(dialog.Answer);
+                SaveAllData();
+                ApplySorting();
+                NavigationService.NavigateTo(new CompanyElement(dialog.Answer));
             }
         }
 
-        private void Delete_Click(object sender, RoutedEventArgs e)
+        public void ApplySorting()
         {
-            Unternehmen? companyToDelete = null;
-
-            if (MainFrame.Content is CompanyListPage listPage && listPage.SelectedCompany != null)
-            {
-                // Fall 1: CompanyListPage
-                companyToDelete = listPage.SelectedCompany;
-            }
-            else if (MainFrame.Content is UnternehmenElement detailPage && detailPage.Company != null)
-            {
-                // Fall 2: Detailansicht
-                companyToDelete = detailPage.Company;
-            }
-
-            if (companyToDelete != null)
-            {
-                MessageBoxResult result = MessageBox.Show(
-                    $"Soll die Firma \"{companyToDelete.Name}\" wirklich gelöscht werden?",
-                    "Löschen bestätigen",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question
-                );
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    Companies.Remove(companyToDelete);
-
-                    // Optional: Zurück zur Listenansicht navigieren
-                    if (MainFrame.Content is UnternehmenElement)
-                    {
-                        MainFrame.Navigate(new CompanyListPage(Companies));
-                    }
-                }
-            }
-        }
-
-        private void Sort_Click(object sender, RoutedEventArgs e) // NUR PLATZHALTER
-        {
-            MessageBox.Show("Button funktioniert!");
-        }
-
-        public enum WebSiteType
-        {
-            AMS,
-            KarriereAt,
-            WKO,
-            LehrstelleAt,
-            LehrstellenPortalAt,
-            DevJobs
-        }
-
-        private void Link_Click(object sender, RoutedEventArgs e)
-        {
-            Button? button = sender as Button;
-            if (button == null)
-                return;
-
-            // Basierend auf dem Content des Buttons eine Aktion ausführen
-            WebSiteType websiteType = WebSiteType.AMS; // Default
-
-            switch (button.Content.ToString())
-            {
-                case "AMS":
-                    websiteType = WebSiteType.AMS;
-                    break;
-                case "karriere.at":
-                    websiteType = WebSiteType.KarriereAt;
-                    break;
-                case "WKO":
-                    websiteType = WebSiteType.WKO;
-                    break;
-                case "lehrstelle.at":
-                    websiteType = WebSiteType.LehrstelleAt;
-                    break;
-                case "lehrstellenportal.at":
-                    websiteType = WebSiteType.LehrstellenPortalAt;
-                    break;
-                case "DevJobs":
-                    websiteType = WebSiteType.DevJobs;
-                    break;
-                default:
-                    return;
-            }
-
-            // Jetzt kannst du das Enum `websiteType` verwenden, um die Seite zu öffnen
-            OpenWebsite(websiteType);
-        }
-
-        // Diese Methode wird später verwendet, um die Seiten zu öffnen, basierend auf dem Enum
-        private void OpenWebsite(WebSiteType site)
-        {
-            string url = string.Empty;
-
-            switch (site)
-            {
-                case WebSiteType.AMS:
-                    url = "https://www.ams.at";
-                    break;
-                case WebSiteType.KarriereAt:
-                    url = "https://www.karriere.at";
-                    break;
-                case WebSiteType.WKO:
-                    url = "https://lehrbetriebsuebersicht.wko.at/SearchLehrbetrieb.aspx";
-                    break;
-                case WebSiteType.LehrstelleAt:
-                    url = "https://www.lehrstelle.at";
-                    break;
-                case WebSiteType.LehrstellenPortalAt:
-                    url = "https://www.lehrstellenportal.at";
-                    break;
-                case WebSiteType.DevJobs:
-                    url = "https://www.devjobs.at";
-                    break;
-            }
-
-            if (!string.IsNullOrEmpty(url))
-            {
-                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-            }
-        }
-
-        private void Lebenslauf_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                // Bestimme den AppData-Pfad zum "user-files"-Ordner und "bewerbungen"-Ordner
-                string userFilesOrdner = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Lehrstellensuchassistenz",
-                    "user-files"
-                );
-
-                string bewerbungenOrdner = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Lehrstellensuchassistenz",
-                    "bewerbungen"
-                );
-
-                // Den Dateipfad für das PDF (z.B. "Lebenslauf.pdf")
-                string pdfDateiPfadUserFiles = Path.Combine(userFilesOrdner, "Lebenslauf.pdf");
-                string pdfDateiPfadBewerbungen = Path.Combine(bewerbungenOrdner, "Lebenslauf.pdf");
-
-                // Überprüfen, ob die Datei im "user-files"-Ordner existiert
-                if (System.IO.File.Exists(pdfDateiPfadUserFiles))
-                {
-                    // Wenn die Datei existiert, kopiere sie auch in den Bewerbungsordner, falls sie noch nicht da ist
-                    if (!System.IO.File.Exists(pdfDateiPfadBewerbungen))
-                    {
-                        // Datei in den Bewerbungsordner kopieren
-                        System.IO.File.Copy(pdfDateiPfadUserFiles, pdfDateiPfadBewerbungen, true);
-                    }
-
-                    // Öffne das PDF aus dem "user-files"-Ordner
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = pdfDateiPfadUserFiles,
-                        UseShellExecute = true
-                    });
-                }
-                else
-                {
-                    // Falls die Datei nicht im "user-files"-Ordner existiert, öffne den OpenFileDialog
-                    OpenFileDialog dialog = new OpenFileDialog
-                    {
-                        Title = "Wählen Sie Ihren Lebenslauf aus",
-                        Filter = "PDF-Dokumente (*.pdf)|*.pdf", // Nur PDF-Dateien
-                        Multiselect = false // Keine Mehrfachauswahl
-                    };
-
-                    if (dialog.ShowDialog() == true)
-                    {
-                        string ausgewaehlteDatei = dialog.FileName;
-
-                        // Sicherstellen, dass beide Ordner existieren
-                        Directory.CreateDirectory(userFilesOrdner);
-                        Directory.CreateDirectory(bewerbungenOrdner);
-
-                        try
-                        {
-                            // Kopiere die Datei in den "user-files"-Ordner
-                            System.IO.File.Copy(ausgewaehlteDatei, pdfDateiPfadUserFiles, true); // Überschreibt die Datei, falls sie bereits existiert
-
-                            // Kopiere die Datei auch in den Bewerbungsordner
-                            System.IO.File.Copy(pdfDateiPfadUserFiles, pdfDateiPfadBewerbungen, true); // Überschreibt die Datei, falls sie bereits existiert
-
-                            // Öffne das PDF
-                            Process.Start(new ProcessStartInfo
-                            {
-                                FileName = pdfDateiPfadUserFiles,
-                                UseShellExecute = true
-                            });
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Fehler beim Speichern der Datei: " + ex.Message);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Fehler: " + ex.Message);
-            }
-        }
-
-        // Diese Methode fängt Klicks auf BEIDE Checkboxen ab
-        private void SortTrigger_Click(object sender, RoutedEventArgs e)
-        {
-            ApplySorting();
-        }
-
-        // Diese Methode reagiert auf die ComboBox
-        private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            // Wichtig: Beim Initialisieren ist die ComboBox manchmal noch null
-            ApplySorting();
-        }
-
-        private void ApplySorting()
-        {
-            // Sicherheitscheck (erweitert um die neue Checkbox)
-            if (SortComboBox == null || Companies == null || CheckAbgelehnt == null ||
-                CheckKeineAntwort == null || CheckUnbeworbenOben == null)
-                return;
-
-            var selectedItem = SortComboBox.SelectedItem as ComboBoxItem;
-            string tag = selectedItem?.Tag?.ToString() ?? "DateDesc";
-            bool ascending = tag.EndsWith("Asc");
-
-            // --- LINQ SORTIERUNG ---
-
-            // 1. Priorität: Unbeworben GANZ NACH OBEN (falls Checkbox an)
-            // Da wir nach oben wollen, sortieren wir absteigend (True/1 kommt vor False/0)
-            var query = Companies.OrderByDescending(c =>
-                CheckUnbeworbenOben.IsChecked == true && c.BewerbungsStatus == Status.Unbeworben);
-
-            // 2. Priorität: Abgelehnte nach unten (False vor True)
-            query = query.ThenBy(c =>
-                CheckAbgelehnt.IsChecked == true && c.BewerbungsStatus == Status.Abgelehnt);
-
-            // 3. Priorität: Keine Antwort nach unten
-            query = query.ThenBy(c =>
-                CheckKeineAntwort.IsChecked == true && c.BewerbungsStatus == Status.KeineAntwort);
-
-            // 4. Die eigentliche Sortierung
-            List<Unternehmen> sorted;
-
-            if (tag.StartsWith("Date")) // Erstell-Datum
-            {
-                sorted = ascending
-                    ? query.ThenBy(c => c.ErstellDatum).ToList()
-                    : query.ThenByDescending(c => c.ErstellDatum).ToList();
-            }
-            else if (tag.StartsWith("Edit")) // NEU: Zuletzt geändert
-            {
-                sorted = ascending
-                    ? query.ThenBy(c => c.ZuletztGeaendert).ToList()
-                    : query.ThenByDescending(c => c.ZuletztGeaendert).ToList();
-            }
-            else // Name
-            {
-                sorted = ascending
-                    ? query.ThenBy(c => c.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase).ToList()
-                    : query.ThenByDescending(c => c.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase).ToList();
-            }
-
-            RefreshCompanies(sorted);
-        }
-
-        private void RefreshCompanies(List<Unternehmen> sortedList)
-        {
-            // Wir leeren die Liste und fügen sie neu sortiert hinzu
-            // Das triggert die UI-Aktualisierung im MainWindow
+            if (CompanyService == null || CheckUnappliedTop == null) return;
+            var criteria = GetCurrentSortCriteria();
+            var sorted = CompanyService.GetSortedList(criteria);
             Companies.Clear();
-            foreach (var c in sortedList)
+            foreach (var c in sorted) Companies.Add(c);
+            if (MainFrame.Content is CompanyListPage listPage)
             {
-                Companies.Add(c);
+                listPage.RefreshList();
             }
         }
 
-        private void OpenBewerbungen_Click(object sender, RoutedEventArgs e)
+        private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplySorting();
+        private void SortTrigger_Click(object sender, RoutedEventArgs e) => ApplySorting();
+
+        private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                string bewerbungenOrdner = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Lehrstellensuchassistenz",
-                    "bewerbungen"
-                );
+            MessageBox.Show("Einstellungen werden in Version 2.1 verfügbar sein.", "Info");
+        }
+        #endregion
 
-                // Ordner anlegen, falls er nicht existiert
-                Directory.CreateDirectory(bewerbungenOrdner);
-
-                // Explorer öffnen
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = bewerbungenOrdner,
-                    UseShellExecute = true,
-                    Verb = "open"
-                });
-            }
-            catch (Exception ex)
+        public CompanyService.SortCriteria GetCurrentSortCriteria()
+        {
+            return new CompanyService.SortCriteria
             {
-                MessageBox.Show("Fehler beim Öffnen des Bewerbungen-Ordners: " + ex.Message);
-            }
+                Tag = (SortComboBox?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DateDesc",
+                UnbeworbenOben = CheckUnappliedTop?.IsChecked ?? false,
+                AbgelehntUnten = CheckRejectedBottom?.IsChecked ?? false,
+                KeineAntwortUnten = CheckNoResponseBottom?.IsChecked ?? false
+            };
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            SaveAllData();
+            base.OnClosing(e);
         }
     }
 }

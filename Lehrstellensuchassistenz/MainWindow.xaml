@@ -5,126 +5,110 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lehrstellensuchassistenz"
         mc:Ignorable="d"
-        Title="Lehrstellensuchassistenz v1.2.0"
-        Height="720"
-        Width="1280"
+        Title="Lehrstellensuchassistenz v2.0.0"
+        Height="720" Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown">
+
     <Window.Resources>
         <ScaleTransform x:Key="TopScale" ScaleX="1" ScaleY="1"/>
         <ScaleTransform x:Key="SideScale" ScaleX="1" ScaleY="1"/>
     </Window.Resources>
 
     <Grid Background="{StaticResource BackgroundBrush}"
-      PreviewMouseWheel="Window_PreviewMouseWheel">
+          PreviewMouseWheel="Window_PreviewMouseWheel">
 
-        <!-- RowDefinitions: Top Buttons, Bar, Main Content -->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Top Buttons -->
             <RowDefinition Height="5"/>
-            <!-- Top horizontal bar -->
-            <RowDefinition/>
-            <!-- Main Content -->
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Top Buttons Row -->
-            <Grid x:Name="TopBarGrid" RenderTransform="{StaticResource TopScale}" RenderTransformOrigin="0,0"
-      Grid.Row="0"
-      Margin="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <!-- Left buttons -->
-                    <ColumnDefinition Width="Auto"/>
-                    <!-- Right: Sort / Add -->
-                </Grid.ColumnDefinitions>
+        <Grid x:Name="TopBarGrid" RenderTransform="{StaticResource TopScale}" RenderTransformOrigin="0,0"
+              Grid.Row="0" Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-                <!-- Left Buttons -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
-                    <Button Content="Zurück" Width="60" Height="40" Margin="0,0,10,0" Click="ReturnPage_Click"/>
-                    <Button Content="Alle Änderungen Bisher Speichern" Width="200" Height="40" Margin="0,0,10,0" Click="SaveCompanies_Click"/>
-                    <Button Content="Ausgewählte Element Löschen" Width="180" Height="40" Click="Delete_Click"/>
-                </StackPanel>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                <Button Content="Zurück" Width="75" Height="40" Margin="0,0,10,0" Click="NavigateBack_Click"/>
+                <Button Content="Änderungen speichern" Width="160" Height="40"  Margin="0,0,10,0" Click="SaveAllData_Click"/>
+                <Button Content="Firma löschen" Width="120" Height="40"  Click="DeleteCompany_Click" Background="#E57373"/>
+            </StackPanel>
 
-                <!-- Right Buttons -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,15,0">
-                    <CheckBox x:Name="CheckAbgelehnt" 
-                  Content="Abgelehnt nach unten" 
-                  FontSize="12"
-                  Click="SortTrigger_Click"/>
-                    <CheckBox x:Name="CheckKeineAntwort" 
-                  Content="Keine Antwort nach unten" 
-                  FontSize="12"
-                  Click="SortTrigger_Click"/>
-                    <CheckBox x:Name="CheckUnbeworbenOben" 
-                  Content="Unbeworben ganz nach oben" 
-                  FontSize="12"
-                  Click="SortTrigger_Click"/>
+                    <CheckBox x:Name="CheckRejectedBottom" 
+                              Content="Abgelehnt nach unten" 
+                              FontSize="12" Foreground="Black"
+                              Click="SortTrigger_Click"/>
+                    <CheckBox x:Name="CheckNoResponseBottom" 
+                              Content="Keine Antwort nach unten" 
+                              FontSize="12" Foreground="Black"
+                              Click="SortTrigger_Click"/>
+                    <CheckBox x:Name="CheckUnappliedTop" 
+                              Content="Unbeworben nach oben" 
+                              FontSize="12" Foreground="Black"
+                              Click="SortTrigger_Click"/>
                 </StackPanel>
-                    
+
                 <ComboBox x:Name="SortComboBox"
-          Width="160" Height="40" Margin="0,0,10,0"
-          SelectionChanged="SortComboBox_SelectionChanged"
-          HorizontalContentAlignment="Left"
-          VerticalContentAlignment="Center"
-          SelectedIndex="0">
-
-                        <!-- Datum -->
-                        <ComboBoxItem Content="Älteste" Tag="DateAsc"/>
-                        <ComboBoxItem Content="Neueste" Tag="DateDesc"/>
-
-                        <!-- Name -->
-                        <ComboBoxItem Content="Name A→Z" Tag="NameAsc"/>
-                        <ComboBoxItem Content="Name Z→A" Tag="NameDesc"/>
-
-                        <ComboBoxItem Content="Zuletzt geändert (Neu zuerst)" Tag="EditDesc"/>
-                        <ComboBoxItem Content="Zuletzt geändert (Alt zuerst)" Tag="EditAsc"/>
+                          Width="180" Height="40" Margin="0,0,10,0" 
+                          SelectionChanged="SortComboBox_SelectionChanged"
+                          VerticalContentAlignment="Center"
+                          SelectedIndex="1">
+                    <ComboBoxItem Content="Datum: Älteste zuerst" Tag="DateAsc"/>
+                    <ComboBoxItem Content="Datum: Neueste zuerst" Tag="DateDesc"/>
+                    <ComboBoxItem Content="Name: A → Z" Tag="NameAsc"/>
+                    <ComboBoxItem Content="Name: Z → A" Tag="NameDesc"/>
+                    <ComboBoxItem Content="Bearbeitet: Neu zuerst" Tag="EditDesc"/>
+                    <ComboBoxItem Content="Bearbeitet: Alt zuerst" Tag="EditAsc"/>
                 </ComboBox>
 
-                    <Button Content="Unternehmen hinzufügen" Width="150" Height="40" Click="AddCompany_Click"/>
-                </StackPanel>
-            </Grid>
-            
-            <!-- Top Horizontal Bar -->
+                <Button Content="+ Firma hinzufügen" Width="160" Height="40" 
+                        Click="AddCompany_Click" 
+                        Background="{StaticResource PrimaryBrush}" 
+                        Foreground="White" FontWeight="Bold"/>
+            </StackPanel>
+        </Grid>
+
         <Border Grid.Row="1" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Stretch"/>
 
-        <!-- Main Content -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <!-- Sidebar -->
                 <ColumnDefinition Width="5"/>
-                <!-- Separator -->
                 <ColumnDefinition Width="*"/>
-                <!-- Main Frame -->
             </Grid.ColumnDefinitions>
 
-            <!-- Sidebar Buttons -->
             <ScrollViewer x:Name="SidebarScrollViewer" RenderTransform="{StaticResource SideScale}" RenderTransformOrigin="0,0"
-              Grid.Column="0"
-              VerticalScrollBarVisibility="Auto"
-              HorizontalScrollBarVisibility="Disabled">
-                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top">
-                    <Button Content="Lebenslauf" Width="180" Height="40" Margin="10" Background="LightGreen" Click="Lebenslauf_Click"/>
+                          Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="SidebarGrid" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+                    <Button Content="📄 Lebenslauf öffnen" Width="180" Height="40" Margin="10,15,10,5" Background="#81C784" Click="Resume_Click"/>
+                    <Button Content="📂 Bewerbungsordner" Width="180" Height="40" Margin="10,5" Background="#64B5F6" Click="OpenApplicationsFolder_Click"/>
 
-                    <!-- Neuer Button: Bewerbungen -->
-                    <Button Content="Bewerbungen" Width="180" Height="40" Margin="10" Background="LightBlue" Click="OpenBewerbungen_Click"/>
+                    <Separator Margin="15,10" Background="Gray"/>
+                    <TextBlock Text="PORTALE" Foreground="Gray" Margin="15,0,0,5" FontSize="12" FontWeight="Bold"/>
 
-                    <Button Content="AMS" Width="180" Height="40" Margin="10" Click="Link_Click"/>
-                    <Button Content="karriere.at" Width="180" Height="40" Margin="10" Click="Link_Click"/>
-                    <Button Content="WKO" Width="180" Height="40" Margin="10" Click="Link_Click"/>
-                    <Button Content="lehrstelle.at" Width="180" Height="40" Margin="10" Click="Link_Click"/>
-                    <Button Content="lehrstellenportal.at" Width="180" Height="40" Margin="10" Click="Link_Click"/>
-                    <Button Content="DevJobs" Width="180" Height="40" Margin="10" Click="Link_Click"/>
-                    <Button Content="Einstellungen" Width="180" Height="40" Margin="10" Background="DarkGray" Click="Sort_Click"/>
+                    <Button Content="AMS Alle Jobs" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://jobs.ams.at/public/emps/"/>
+                    <Button Content="karriere.at" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.karriere.at"/>
+                    <Button Content="WKO Lehrstellen" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://lehrbetriebsuebersicht.wko.at/SearchLehrbetrieb.aspx"/>
+                    <Button Content="DevJobs" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://devjobs.at"/>
+                    <Button Content="lehrstelle.at" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.lehrstelle.at"/>
+                    <Button Content="Lehrstellenportal" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.lehrstellenportal.at"/>
+                    <Button Content="Metajob" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.metajob.at"/>
+                    <Button Content="Willhaben Jobs" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.willhaben.at/jobs/"/>
+
+
+                    <Separator Margin="15,10" Background="Gray"/>
+                    <Button Content="⚙ Einstellungen" Width="180" Height="40" Margin="10,5,10,10" Background="#9E9E9E" Click="Settings_Click"/>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- Vertical Separator -->
             <Border Grid.Column="1" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Stretch"/>
 
-            <!-- Main Frame -->
             <Frame x:Name="MainFrame" Grid.Column="2" Margin="10" NavigationUIVisibility="Hidden"/>
         </Grid>
     </Grid>

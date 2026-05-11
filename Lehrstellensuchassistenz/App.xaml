@@ -6,10 +6,19 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Colors.xaml"/>
+                <ResourceDictionary Source="Resources/Colors.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-            <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+
+            <!-- Basis-Style für alle Buttons -->
+            <Style TargetType="Button">
+                <Setter Property="FontSize" Value="13"/>
+            </Style>
+
+            <!-- Basis-Style für alle TextBlocks -->
+            <Style TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13"/>
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

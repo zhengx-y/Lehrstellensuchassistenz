@@ -9,11 +9,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="resources\images\generische_vorlage.png" />
-    <None Remove="resources\images\leeres_dokument.png" />
-    <None Remove="resources\images\shortcut_icon.ico" />
-    <None Remove="resources\word_doc\Bewerbung_Beispiel.docx" />
-    <None Remove="resources\word_doc\empty.docx" />
+    <Compile Remove="Resources\word_doc\**" />
+    <EmbeddedResource Remove="Resources\word_doc\**" />
+    <None Remove="Resources\word_doc\**" />
+    <Page Remove="Resources\word_doc\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\Images\generische_vorlage.png" />
+    <None Remove="Resources\Images\leeres_dokument.png" />
+    <None Remove="Resources\Images\shortcut_icon.ico" />
+    <None Remove="Resources\Templates\Application_Example.docx" />
+    <None Remove="Resources\Templates\empty.docx" />
+    <None Remove="Views\CompanyElement.xaml.cs~RF91ca43b1.TMP" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,22 +37,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="resources\word_doc\Bewerbung_Beispiel.docx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="resources\word_doc\empty.docx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="resources\images\generische_vorlage.png">
+    <Resource Include="Resources\Images\generische_vorlage.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="resources\images\leeres_dokument.png">
+    <Resource Include="Resources\Images\leeres_dokument.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="resources\images\shortcut_icon.ico">
+    <Resource Include="Resources\Images\shortcut_icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Templates\Application_Example.docx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Templates\Empty.docx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
