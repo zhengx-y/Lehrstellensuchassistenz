@@ -5,77 +5,97 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lehrstellensuchassistenz"
         mc:Ignorable="d"
-        Title="Lehrstellensuchassistenz v0.1.0-alpha"
+        Title="Lehrstellensuchassistenz v0.2.0-alpha"
         Height="720"
         Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown">
-    
 
     <Grid Background="{StaticResource BackgroundBrush}">
-        <!-- Top buttons row + horizontal bar + main content -->
+
+        <!-- RowDefinitions: Top Buttons, Bar, Main Content -->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Top buttons -->
+            <!-- Top Buttons -->
             <RowDefinition Height="5"/>
-            <!-- Top border -->
+            <!-- Top horizontal bar -->
             <RowDefinition/>
-            <!-- Main content -->
+            <!-- Main Content -->
         </Grid.RowDefinitions>
 
-        <!-- Top buttons row -->
+        <!-- Top Buttons Row -->
         <Grid Grid.Row="0" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <!-- Left buttons -->
                 <ColumnDefinition Width="Auto"/>
+                <!-- Right: Sort / Add -->
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <!-- Left Buttons -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
                 <Button Content="Zurück" Width="60" Height="40" Margin="0,0,10,0" Click="ReturnPage_Click"/>
                 <Button Content="Alle Änderungen Bisher Speichern" Width="200" Height="40" Margin="0,0,10,0" Click="SaveCompanies_Click"/>
                 <Button Content="Ausgewählte Element Löschen" Width="180" Height="40" Click="Delete_Click"/>
             </StackPanel>
 
-            <!-- Right buttons -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Sortieren" Width="80" Height="40" Margin="0,0,10,0" Click="Sort_Click"/>
+            <!-- Right Buttons -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <ComboBox x:Name="SortComboBox"
+          Width="160" Height="40" Margin="0,0,10,0"
+          SelectionChanged="SortComboBox_SelectionChanged"
+          HorizontalContentAlignment="Left"
+          VerticalContentAlignment="Center"
+          SelectedIndex="0">
+                    <!-- Platzhalter -->
+                    <ComboBoxItem IsEnabled="False" Content="Sortieren" />
+
+                    <!-- Datum -->
+                    <ComboBoxItem Content="Älteste" Tag="DateAsc"/>
+                    <ComboBoxItem Content="Neueste" Tag="DateDesc"/>
+
+                    <!-- Name -->
+                    <ComboBoxItem Content="Name A→Z" Tag="NameAsc"/>
+                    <ComboBoxItem Content="Name Z→A" Tag="NameDesc"/>
+                </ComboBox>
+
                 <Button Content="Unternehmen hinzufügen" Width="150" Height="40" Click="AddCompany_Click"/>
             </StackPanel>
         </Grid>
 
-        <!-- Top horizontal bar -->
-        <Border Grid.Row="1" Grid.ColumnSpan="3" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Stretch"/>
+        <!-- Top Horizontal Bar -->
+        <Border Grid.Row="1" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Stretch"/>
 
-        <!-- Main content row (nested grid for sidebar / separator / list) -->
+        <!-- Main Content -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200"/>
                 <!-- Sidebar -->
                 <ColumnDefinition Width="5"/>
-                <!-- Vertical separator -->
+                <!-- Separator -->
                 <ColumnDefinition Width="*"/>
-                <!-- ListBox -->
+                <!-- Frame -->
             </Grid.ColumnDefinitions>
 
-            <!-- Sidebar button -->
-            <StackPanel Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Top">
-                <Button Content="Lebenslauf" Width="180" Height="40" Margin="10" Background="LightGreen" Click="Sort_Click"/>
-                <Button Content="AMS" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                <Button Content="DevJobs" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                <Button Content="WKO" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                <Button Content="lehrstelle.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                <Button Content="karriere.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                <Button Content="lehrstellenportal.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                <Button Content="Einstellungen" Width="180" Height="40" Margin="10" Background="DarkGray" Click="Sort_Click"/>
-            </StackPanel>
+            <!-- Sidebar Buttons -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top">
+                    <Button Content="Lebenslauf" Width="180" Height="40" Margin="10" Background="LightGreen" Click="Sort_Click"/>
+                    <Button Content="AMS" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
+                    <Button Content="DevJobs" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
+                    <Button Content="WKO" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
+                    <Button Content="lehrstelle.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
+                    <Button Content="karriere.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
+                    <Button Content="lehrstellenportal.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
+                    <Button Content="Einstellungen" Width="180" Height="40" Margin="10" Background="DarkGray" Click="Sort_Click"/>
+                </StackPanel>
+            </ScrollViewer>
 
-            <!-- Vertical separator -->
+            <!-- Vertical Separator -->
             <Border Grid.Column="1" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Stretch"/>
 
-            <Frame x:Name="MainFrame"
-            Grid.Column="2"
-            Margin="10"
-            NavigationUIVisibility="Hidden"/>
+            <!-- Main Frame -->
+            <Frame x:Name="MainFrame" Grid.Column="2" Margin="10" NavigationUIVisibility="Hidden"/>
         </Grid>
+
     </Grid>
 </Window>

@@ -8,6 +8,155 @@
       d:DesignHeight="450" d:DesignWidth="800"
       Title="UnternehmenElement">
 
-    <Grid Background="Green">
+    <Grid Background="{StaticResource BackgroundBrush}">
+
+        <!-- ROWS -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Oben -->
+            <RowDefinition Height="*"/>
+            <!-- Mitte -->
+            <RowDefinition Height="Auto"/>
+            <!-- Unten -->
+        </Grid.RowDefinitions>
+
+        <!-- COLUMNS -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <!-- Links -->
+            <ColumnDefinition Width="Auto"/>
+            <!-- Rechts (Foto) -->
+        </Grid.ColumnDefinitions>
+
+        <!-- 🔹 OBEN LINKS: Editable Felder nebeneinander -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="10">
+
+            <!-- Name -->
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <!-- Labelbreite -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- TextBox nimmt Rest -->
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Name:" FontSize="25" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" FontSize="25"/>
+            </Grid>
+
+            <!-- Website mit Öffnen-Button -->
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <!-- Label -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- TextBox + Button -->
+                    <ColumnDefinition Width="40"/>
+                    <!-- Button quadratisch -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Label -->
+                <TextBlock Text="Link:" FontSize="20" VerticalAlignment="Center"/>
+
+                <!-- TextBox -->
+                <TextBox Grid.Column="1" Text="{Binding Website, UpdateSourceTrigger=PropertyChanged}" FontSize="20" VerticalAlignment="Center"/>
+
+                <!-- Button -->
+                <Button Grid.Column="2" Width="30" Height="30" Margin="5,0,0,0"
+            Content="↗"
+                    ToolTip="Link öffnen"
+            Click="OpenLink_Click"/>
+            </Grid>
+
+            <!-- Status -->
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <!-- Labelbreite -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- ComboBox dehnt sich -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Label -->
+                <TextBlock Text="Status:" FontSize="20" VerticalAlignment="Center"/>
+
+                <!-- ComboBox -->
+                <ComboBox Grid.Column="1"
+              SelectedItem="{Binding BewerbungsStatus, UpdateSourceTrigger=PropertyChanged}"
+              HorizontalAlignment="Left"
+              Width="200"
+              ItemsSource="{x:Static local:StatusValues.All}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" FontSize="15"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Grid>
+
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <!-- Labelbreite -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Wert -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Label -->
+                <TextBlock Text="Erstellt:" FontSize="20" VerticalAlignment="Center"/>
+
+                <!-- Wert -->
+                <TextBlock Grid.Column="1" Text="{Binding ErstellDatum, StringFormat='dd.MM.yyyy'}"
+               VerticalAlignment="Center" FontSize="20"/>
+            </Grid>
+
+        </StackPanel>
+
+        <!-- 🔹 OBEN RECHTS: Klickbarer Foto-Platzhalter -->
+        <Button Grid.Row="0"
+        Grid.Column="1"
+        Width="250"
+        Height="250"
+        Margin="10"
+        Click="Select_Photo_Click"
+        Background="Transparent"
+        BorderBrush="Gray"
+        BorderThickness="1">
+
+            <Grid>
+                <Image x:Name="PhotoPreview"
+               Stretch="UniformToFill"/>
+
+                <TextBlock x:Name="PhotoPlaceholderText"
+                   Text="Foto auswählen"
+                   Foreground="Gray"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   TextAlignment="Center"/>
+            </Grid>
+        </Button>
+
+        <!-- 🔹 MITTE: Notizen -->
+        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+        Margin="10">
+            <StackPanel>
+                <TextBlock Text="Notizen:" Margin="0,-35,10,5" FontSize="20"/>
+                <TextBox Text="{Binding Notizen, UpdateSourceTrigger=PropertyChanged}" 
+                 AcceptsReturn="True"
+                 VerticalScrollBarVisibility="Auto"
+                 FontSize="15"
+                 Height="260"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 🔹 UNTEN: Buttons über ganze Breite -->
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="5"
+                    Height="35">
+            <Button Content="Bewerbungstipps" Width="110" Margin="5" Click="Sort_Click"/>
+            <Button Content="Lebenslauftipps" Width="110" Margin="5" Click="Sort_Click"/>
+        </StackPanel>
+
     </Grid>
 </Page>
