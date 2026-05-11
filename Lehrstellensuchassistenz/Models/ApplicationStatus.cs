@@ -1,27 +1,14 @@
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Lehrstellensuchassistenz.Models
 {
     public enum ApplicationStatus
     {
-        Unbeworben,
-        Beworben,
-        KeineAntwort,
-        Eingeladen,
-        Abgelehnt,
-        Zusage
-    }
-
-    public static class StatusValues
-    {
-        public static List<ApplicationStatus> All => new List<ApplicationStatus>
-        {
-            ApplicationStatus.Unbeworben,
-            ApplicationStatus.Beworben,
-            ApplicationStatus.Eingeladen,
-            ApplicationStatus.Zusage,
-            ApplicationStatus.Abgelehnt,
-            ApplicationStatus.KeineAntwort
-        };
+        [Description("Noch nicht beworben")] Unbeworben,
+        [Description("Beworben")] Beworben,
+        [Description("Keine Antwort")] KeineAntwort,
+        [Description("Eingeladen")] Eingeladen,
+        [Description("Abgelehnt")] Abgelehnt,
+        [Description("Zusage")] Zusage
     }
 }

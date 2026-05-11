@@ -31,13 +31,8 @@ namespace Lehrstellensuchassistenz.Views
         /// </summary>
         public void RefreshList()
         {
-            if (CompanyListBox != null)
-            {
-                // Items.Refresh() ist hier meistens gar nicht mehr nötig, 
-                // da ObservableCollection selbst Events feuert. 
-                // Aber es schadet nicht, um die Sortierung zu erzwingen.
-                CompanyListBox.Items.Refresh();
-            }
+            // Das erzwingt das Neuzeichnen der Element-Container
+            CompanyListBox.Items.Refresh();
         }
 
         private void CompanyListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -46,6 +41,20 @@ namespace Lehrstellensuchassistenz.Views
             {
                 // Zugriff auf den jetzt öffentlichen NavigationService
                 main.NavigationService.NavigateTo(new CompanyElement(SelectedCompany));
+            }
+        }
+
+        private void StatusComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // e.RemovedItems.Count > 0 stellt sicher, dass vorher ein Wert da war 
+            // und nicht gerade die ganze Liste gelöscht wurde.
+            if (e.AddedItems.Count > 0 && e.RemovedItems.Count > 0)
+            {
+                if (Application.Current.MainWindow is MainWindow main)
+                {
+                    main.SaveAllData();
+                    main.ApplySorting();
+                }
             }
         }
     }

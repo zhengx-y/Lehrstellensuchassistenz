@@ -6,6 +6,7 @@
       xmlns:local="clr-namespace:Lehrstellensuchassistenz.Views"
       xmlns:models="clr-namespace:Lehrstellensuchassistenz.Models"
       xmlns:converters="clr-namespace:Lehrstellensuchassistenz.Converters"
+      xmlns:System="clr-namespace:System;assembly=mscorlib"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
       Title="Firma Details">
@@ -14,12 +15,18 @@
         <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <converters:EnumDescriptionConverter x:Key="EnumDescConverter"/>
+
+        <ObjectDataProvider x:Key="StatusEnumValues" 
+                            MethodName="GetValues" 
+                            ObjectType="{x:Type System:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="models:ApplicationStatus"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </Page.Resources>
 
-    <Grid Background="{StaticResource BackgroundBrush}" 
-          Focusable="True" 
-          MouseDown="Grid_MouseDown">
-
+    <Grid Background="{StaticResource BackgroundBrush}" Focusable="True" MouseDown="Grid_MouseDown">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -28,133 +35,130 @@
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="280"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0" Grid.Column="0" Margin="15">
-            <Grid Margin="0,0,0,10">
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="15,15,5,15">
+            <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Name:" FontSize="22" FontWeight="Bold" Foreground="Black" VerticalAlignment="Center"/>
-                <TextBox Grid.Column="1" 
-                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
-                         FontSize="22"/>
+                <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" FontSize="22" Padding="5"/>
             </Grid>
 
-            <Grid Margin="0,0,0,10">
+            <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition Width="45"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Link:" FontSize="18" Foreground="Black" VerticalAlignment="Center"/>
-                <TextBox Grid.Column="1" 
-                         Text="{Binding Website, UpdateSourceTrigger=PropertyChanged}" 
-                         FontSize="16" 
-                         VerticalAlignment="Center" />
-                <Button Grid.Column="2" Width="30" Height="30" Margin="5,0,0,0" Content="↗" Click="OpenLink_Click"/>
+                <TextBox Grid.Column="1" Text="{Binding Website, UpdateSourceTrigger=PropertyChanged}" FontSize="16" VerticalAlignment="Center" Padding="5"/>
+                <Button Grid.Column="2" Width="35" Height="35" Margin="10,0,0,0" Content="↗" Click="OpenLink_Click" FontSize="18" Cursor="Hand"/>
             </Grid>
 
-            <Grid Margin="0,0,0,10">
+            <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
                 <TextBlock Text="Status:" FontSize="18" Foreground="Black" VerticalAlignment="Center"/>
-
-                <ComboBox Grid.Column="1" 
-              SelectedValue="{Binding Status, UpdateSourceTrigger=PropertyChanged}" 
-              HorizontalAlignment="Left" 
-              Width="250" 
-              ItemsSource="{x:Static models:StatusValues.All}"
-              Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}"
-              Foreground="White"
-              FontWeight="SemiBold"
-              VerticalContentAlignment="Center">
-
+                <ComboBox Grid.Column="1" HorizontalAlignment="Left" Width="280" Height="40" FontSize="16" 
+                      ItemsSource="{Binding Source={StaticResource StatusEnumValues}}"
+                      SelectedItem="{Binding Status, UpdateSourceTrigger=PropertyChanged}"
+                      Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}"
+                      Foreground="White" FontWeight="SemiBold" VerticalContentAlignment="Center" Padding="10,0">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Ellipse Width="10" Height="10" 
-                             Fill="{Binding Converter={StaticResource StatusToColorConverter}}" 
-                             Margin="5,0,10,0" 
-                             VerticalAlignment="Center"/>
-
-                                <TextBlock Text="{Binding}" 
-                               FontSize="15" 
-                               Padding="5" 
-                               VerticalAlignment="Center"
-                               Foreground="Black"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <Ellipse Width="14" Height="14" Fill="{Binding Converter={StaticResource StatusToColorConverter}}" Margin="2,0,12,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Converter={StaticResource EnumDescConverter}}" FontSize="16" Foreground="Black" VerticalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
             </Grid>
-
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="100"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="Erstellt:" FontSize="14" Foreground="Gray" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding CreatedAtFormatted}" Foreground="Gray" VerticalAlignment="Center" FontSize="14"/>
-            </Grid>
         </StackPanel>
 
-        <Button Grid.Row="0" Grid.Column="1" Width="200" Height="200" Margin="15" Click="Select_Photo_Click" Background="White" BorderBrush="Gray">
+        <Border Grid.Row="0" Grid.Column="1" Margin="15" 
+            BorderBrush="#CCC" BorderThickness="1" CornerRadius="10" 
+            Height="250" Width="250" Background="#F5F5F5" 
+            MouseLeftButtonDown="Select_Photo_Click" Cursor="Hand"
+            HorizontalAlignment="Right" VerticalAlignment="Top">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+            </Border.Effect>
             <Grid>
-                <Image x:Name="PhotoPreview" Stretch="UniformToFill"/>
-                <TextBlock x:Name="PhotoPlaceholderText" Text="Foto auswählen" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Visible"/>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="PhotoPlaceholderText">
+                    <TextBlock Text="📷" FontSize="50" HorizontalAlignment="Center" Foreground="#999"/>
+                    <TextBlock Text="Firmenbild / Haus" FontSize="14" Foreground="#999" Margin="0,10,0,0" FontWeight="SemiBold"/>
+                    <TextBlock Text="Klicken zum Auswählen" FontSize="11" Foreground="#AAA" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <Image x:Name="PhotoPreview" Stretch="UniformToFill" Margin="2">
+                    <Image.Clip>
+                        <RectangleGeometry Rect="0,0,246,246" RadiusX="8" RadiusY="8"/>
+                    </Image.Clip>
+                </Image>
             </Grid>
-        </Button>
+        </Border>
 
-        <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Header="Notizen" Margin="15" Foreground="Black" FontSize="16">
+        <GroupBox Grid.Row="1" Grid.ColumnSpan="2" Header="Notizen" Margin="15,5" FontSize="14" Foreground="#444">
             <Grid>
-                <RichTextBox x:Name="NotizenBox"
-                     VerticalScrollBarVisibility="Auto"
-                     PreviewKeyDown="NotizenBox_PreviewKeyDown"
-                     TextChanged="NotizenBox_TextChanged" 
-                     FontSize="16"
-                     Padding="10"/>
+                <RichTextBox x:Name="NotizenBox" TextChanged="NotizenBox_TextChanged" PreviewKeyDown="NotizenBox_PreviewKeyDown"
+                         AcceptsTab="True" Padding="12" FontSize="16" BorderThickness="0" Background="Transparent">
+                    <RichTextBox.Resources>
+                        <Style TargetType="{x:Type Paragraph}">
+                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="LineHeight" Value="24"/>
+                        </Style>
+                    </RichTextBox.Resources>
+                </RichTextBox>
 
-                <TextBlock x:Name="PlaceholderText"
-                   Text=" Hier kannst du Details zur Stelle, Ansprechpartner oder Fragen notieren..."
-                   Foreground="LightGray"
-                   Margin="15,12"
-                   IsHitTestVisible="False"
-                   Visibility="Visible"/>
+                <TextBlock x:Name="PlaceholderText" 
+                       IsHitTestVisible="False" 
+                       Text=" Schreibe hier wichtige Details, Ansprechpartner oder kopiere Infos rein..." 
+                       VerticalAlignment="Top" HorizontalAlignment="Left" 
+                       Margin="15,14,0,0" Foreground="#BBB" FontStyle="Italic" FontSize="16"
+                       Visibility="Visible"/>
             </Grid>
         </GroupBox>
 
-        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="15,0,15,15">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <Button Content="Bewerben!" 
-                    Width="120" Height="40" 
-                    FontSize="16" FontWeight="Bold" 
-                    Background="#4CAF50" Foreground="White" 
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Padding="15" Background="#F0F0F0" BorderBrush="#DDD" BorderThickness="0,1,0,0">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Content="BEWERBEN!" Width="180" Height="55" FontSize="22" FontWeight="Black" 
+                    Background="#4CAF50" Foreground="White" BorderThickness="0"
                     Visibility="{Binding CanApply, Converter={StaticResource BoolToVisibilityConverter}}" 
-                    Click="Apply_Click"/>
+                    Click="Apply_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
 
-            <Button Grid.Column="1" 
-                    Content="Schreiben fortsetzen" 
-                    Width="180" Height="40" Margin="10,0,0,0" 
-                    FontSize="16" Background="#2196F3" Foreground="White" 
+                    <Button Content="Fortsetzen" Width="150" Height="55" Margin="15,0,0,0" FontSize="18" FontWeight="Bold"
+                    Background="#2196F3" Foreground="White" BorderThickness="0"
                     Visibility="{Binding LastApplicationPath, Converter={StaticResource NullToVisibilityConverter}}" 
-                    Click="ContinueButton_Click"/>
+                    Click="ContinueButton_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                </StackPanel>
 
-            <StackPanel Grid.Column="3" Orientation="Horizontal">
-                <Button Content="💡 Bewerbungstipps" Width="140" Height="40" Margin="5,0" Click="Tipps_Click" Tag="Bewerbungstipps"/>
-                <Button Content="📝 Lebenslauftipps" Width="140" Height="40" Click="Tipps_Click" Tag="Lebenslauftipps"/>
-            </StackPanel>
-        </Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="💡 Bewerbungstipps" Width="150" Height="34" Margin="5,0" 
+                    Click="Tipps_Click" Tag="Bewerbungstipps" FontSize="13" Cursor="Hand"/>
+                    <Button Content="📝 Lebenslauftipps" Width="150" Height="34" 
+                    Click="Tipps_Click" Tag="Lebenslauftipps" FontSize="13" Cursor="Hand"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Page>

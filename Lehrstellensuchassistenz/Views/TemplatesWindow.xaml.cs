@@ -74,50 +74,50 @@ namespace Lehrstellensuchassistenz.Views
             try
             {
                 string? sourceFile = null;
-                string basePath = AppDomain.CurrentDomain.BaseDirectory;
+                // Zeigt immer auf den Ordner, in dem die .exe aktuell gestartet wurde
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
                 string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lehrstellensuchassistenz");
 
                 switch (type)
                 {
                     case ApplicationType.Generic:
-                        sourceFile = Path.Combine(basePath, "Resources", "Templates", "Application_Example.docx");
+                        sourceFile = Path.Combine(baseDir, "Resources", "Templates", "Application_Example.docx");
                         break;
 
                     case ApplicationType.Empty:
-                        sourceFile = Path.Combine(basePath, "Resources", "Templates", "Empty.docx");
+                        sourceFile = Path.Combine(baseDir, "Resources", "Templates", "Empty.docx");
                         break;
 
                     case ApplicationType.Custom:
                         sourceFile = Path.Combine(appDataPath, "user-files", "Eigen_Vorlage.docx");
-                        if (!File.Exists(sourceFile))
-                        {
-                            MessageBox.Show("Bitte laden Sie erst eine eigene Vorlage hoch.", "Vorlage fehlt", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            return;
-                        }
                         break;
                 }
 
+                // Pfad für Windows "sauber" machen (entfernt doppelte Backslashes etc.)
+                if (sourceFile != null) sourceFile = Path.GetFullPath(sourceFile);
+
+                // Check, ob die Datei jetzt wirklich im bin-Ordner existiert
                 if (string.IsNullOrEmpty(sourceFile) || !File.Exists(sourceFile))
                 {
-                    MessageBox.Show("Vorlage nicht gefunden. Bitte prüfen Sie den 'Resources/Templates' Ordner.", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Datei nicht gefunden!\nPfad: {sourceFile}\n\nBitte prüfen Sie, ob der Ordner 'Resources' neben der Programm-Datei liegt.",
+                                    "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                // Ziel-Ordner erstellen
+                // --- Ziel-Logik (Bewerbung erstellen) ---
                 string targetFolder = Path.Combine(appDataPath, "bewerbungen");
                 Directory.CreateDirectory(targetFolder);
 
-                // Dateiname säubern (keine ungültigen Zeichen)
                 string companyName = _company?.Name ?? "Bewerbung";
                 foreach (char c in Path.GetInvalidFileNameChars()) companyName = companyName.Replace(c, '_');
 
                 string newFileName = $"{companyName}_{DateTime.Now:yyyyMMdd_HHmm}.docx";
                 string targetPath = Path.Combine(targetFolder, newFileName);
 
-                // Datei kopieren
                 File.Copy(sourceFile, targetPath, true);
 
-                // Model aktualisieren
+                // Model & UI Update
                 if (_company != null)
                 {
                     _company.LastApplicationPath = targetPath;
@@ -125,10 +125,9 @@ namespace Lehrstellensuchassistenz.Views
                     _company.UpdateTimestamp();
                 }
 
-                // UI Refresh
                 _companyElement?.LoadNotizen();
 
-                // Word Dokument öffnen
+                // Dokument öffnen
                 Process.Start(new ProcessStartInfo(targetPath) { UseShellExecute = true });
 
                 this.DialogResult = true;
@@ -136,7 +135,7 @@ namespace Lehrstellensuchassistenz.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Fehler beim Erstellen der Bewerbung: " + ex.Message);
+                MessageBox.Show("Fehler: " + ex.Message);
             }
         }
     }

@@ -5,16 +5,25 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:Lehrstellensuchassistenz.Views"
       xmlns:converters="clr-namespace:Lehrstellensuchassistenz.Converters"
+      xmlns:localModels="clr-namespace:Lehrstellensuchassistenz.Models"
+      xmlns:System="clr-namespace:System;assembly=mscorlib"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      UseLayoutRounding="True" 
-      TextOptions.TextFormattingMode="Display"
-      TextOptions.TextRenderingMode="ClearType"
       Title="Deine Bewerbungen">
 
     <Page.Resources>
-        <!-- Achte darauf, dass der Converter im Namespace .Converters liegt -->
         <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:EnumDescriptionConverter x:Key="EnumDescConverter"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+
+        <ObjectDataProvider x:Key="StatusEnumValues" 
+                            MethodName="GetValues" 
+                            ObjectType="{x:Type System:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="localModels:ApplicationStatus"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </Page.Resources>
 
     <Grid Background="{StaticResource BackgroundBrush}">
@@ -28,85 +37,83 @@
 
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <Grid Margin="0,0,0,-5" Background="Transparent">
-
+                    <Grid Margin="0,0,0,-5">
                         <Border Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}" 
-                    CornerRadius="10" 
-                    SnapsToDevicePixels="True"
-                    Margin="10">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="15" 
-                                      ShadowDepth="2" 
-                                      Opacity="0.4" 
-                                      Color="Black"
-                                      RenderingBias="Quality"/>
-                            </Border.Effect>
-                        </Border>
+        CornerRadius="10" Margin="10">
+    <Border.CacheMode>
+        <BitmapCache EnableClearType="True" RenderAtScale="1"/>
+    </Border.CacheMode>
+    <Border.Effect>
+        <DropShadowEffect BlurRadius="15" Opacity="0.4"/>
+    </Border.Effect>
+</Border>
 
-                        <Border Background="Transparent" 
-                    Padding="20"
-                    Margin="10"
-                    SnapsToDevicePixels="True">
+                        <Border Background="Transparent" Padding="20" Margin="10">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="{Binding Name}" 
-                               FontSize="24" 
-                               FontWeight="Bold" 
-                               Foreground="White"
-                               VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Name}" FontSize="22" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
 
-                                <StackPanel Grid.Column="1" 
-                                VerticalAlignment="Center" 
-                                Margin="25,0,15,0" 
-                                Opacity="0.8">
-                                    <TextBlock Text="Zuletzt aktualisiert:" 
-                                   FontSize="10" 
-                                   Foreground="White" 
-                                   HorizontalAlignment="Right"
-                                   Margin="0,0,0,2"/>
-                                    <TextBlock Text="{Binding LastModified, StringFormat={}{0:dd.MM.yyyy HH:mm}}" 
-                                   FontSize="13" 
-                                   FontWeight="SemiBold"
-                                   Foreground="White" 
-                                   HorizontalAlignment="Right"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="25,0,15,0" Opacity="0.8">
+                                    <TextBlock Text="Zuletzt aktualisiert:" FontSize="10" Foreground="White" HorizontalAlignment="Right"/>
+                                    <TextBlock Text="{Binding LastModified, StringFormat={}{0:dd.MM.yyyy}}" FontSize="13" Foreground="White" HorizontalAlignment="Right"/>
                                 </StackPanel>
 
-                                <TextBlock Grid.Column="2" 
-                               Text="{Binding Status}" 
-                               FontSize="16" 
-                               FontWeight="Medium"
-                               Foreground="White" 
-                               Opacity="0.95"
-                               VerticalAlignment="Center" 
-                               MinWidth="100"
-                               TextAlignment="Right"/>
+                                <ComboBox Grid.Column="2" 
+                                          ItemsSource="{Binding Source={StaticResource StatusEnumValues}}"
+                                          SelectedItem="{Binding Status, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          Width="152" Height="30"
+                                          VerticalContentAlignment="Center"
+                                          SelectionChanged="StatusComboBox_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource EnumDescConverter}}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <CheckBox Grid.Column="3" 
+          VerticalAlignment="Center" 
+          Margin="20,0,10,0"
+          IsChecked="{Binding IsSelectedForAction, Mode=TwoWay}"
+          Visibility="{Binding Source={x:Static Application.Current}, Path=MainWindow.CheckMultiSelect.IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <CheckBox.LayoutTransform>
+                                        <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
+                                    </CheckBox.LayoutTransform>
+                                </CheckBox>
                             </Grid>
                         </Border>
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
 
-            <!-- Entfernt das hässliche Standard-Blau beim Auswählen -->
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
-                    <Setter Property="Padding" Value="0"/>
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListBoxItem">
-                                <ContentPresenter x:Name="Content" />
+                                <Border x:Name="SelectionBorder" 
+                                        Background="Transparent" 
+                                        BorderThickness="0" 
+                                        Margin="5,2"
+                                        RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                    </Border.RenderTransform>
+                                    <ContentPresenter x:Name="Content" />
+                                </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Content" Property="Opacity" Value="0.85"/>
                                         <Setter Property="Cursor" Value="Hand"/>
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="Content" Property="RenderTransform">
+                                        <Setter TargetName="SelectionBorder" Property="RenderTransform">
                                             <Setter.Value>
                                                 <ScaleTransform ScaleX="0.99" ScaleY="0.99"/>
                                             </Setter.Value>
@@ -118,7 +125,6 @@
                     </Setter>
                 </Style>
             </ListBox.ItemContainerStyle>
-
         </ListBox>
     </Grid>
 </Page>

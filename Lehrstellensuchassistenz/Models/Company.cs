@@ -136,5 +136,12 @@ namespace Lehrstellensuchassistenz.Models
             Bewerbungstipps,
             Lebenslauftipps
         }
+
+        private bool _isSelectedForAction;
+        public bool IsSelectedForAction
+        {
+            get => _isSelectedForAction;
+            set { _isSelectedForAction = value; OnPropertyChanged(); }
+        }
     }
 }

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lehrstellensuchassistenz"
         mc:Ignorable="d"
-        Title="Lehrstellensuchassistenz v2.0.0"
+        Title="Lehrstellensuchassistenz v2.1.0"
         Height="720" Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown">
 
@@ -32,8 +32,31 @@
 
             <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
                 <Button Content="Zurück" Width="75" Height="40" Margin="0,0,10,0" Click="NavigateBack_Click"/>
-                <Button Content="Änderungen speichern" Width="160" Height="40"  Margin="0,0,10,0" Click="SaveAllData_Click"/>
-                <Button Content="Firma löschen" Width="120" Height="40"  Click="DeleteCompany_Click" Background="#E57373"/>
+                <Button Content="Änderungen speichern" Width="160" Height="40" Margin="0,0,10,0" Click="SaveAllData_Click"/>
+
+                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
+
+                <Button Content="Auswahl aufheben" 
+            Width="120" Height="40" 
+            Margin="0,0,10,0" 
+            Click="ClearSelection_Click"
+            Background="#CFD8DC"/>
+
+                <Button Content="Markierte löschen" Width="130" Height="40" Margin="0,0,10,0" 
+            Click="BulkDelete_Click" Background="#E57373"/>
+
+                <StackPanel x:Name="MultiSelectActions" Orientation="Horizontal">
+                    <ComboBox x:Name="BulkStatusCombo" Width="150" Height="40" 
+                  SelectionChanged="BulkStatus_Changed"
+                  ItemsSource="{Binding Source={StaticResource StatusEnumValues}}"
+                  VerticalContentAlignment="Center">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource EnumDescConverter}}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -88,6 +111,20 @@
                 <StackPanel x:Name="SidebarGrid" HorizontalAlignment="Stretch" VerticalAlignment="Top">
                     <Button Content="📄 Lebenslauf öffnen" Width="180" Height="40" Margin="10,15,10,5" Background="#81C784" Click="Resume_Click"/>
                     <Button Content="📂 Bewerbungsordner" Width="180" Height="40" Margin="10,5" Background="#64B5F6" Click="OpenApplicationsFolder_Click"/>
+
+                    <Separator Margin="15,10" Background="Gray"/>
+                    <TextBlock Text="MEINE LINKS" Foreground="Gray" Margin="15,0,0,5" FontSize="12" FontWeight="Bold"/>
+
+                    <ItemsControl ItemsSource="{Binding CustomLinks, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Name}" 
+                    Tag="{Binding Url}" 
+                    Width="180" Height="35" Margin="10,2" 
+                    Click="Quicklink_Click"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <Separator Margin="15,10" Background="Gray"/>
                     <TextBlock Text="PORTALE" Foreground="Gray" Margin="15,0,0,5" FontSize="12" FontWeight="Bold"/>
