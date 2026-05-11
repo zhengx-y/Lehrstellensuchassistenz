@@ -172,18 +172,22 @@ namespace Lehrstellensuchassistenz
                     File.Copy(quelleDatei, zielPfad, true);
 
                     // Pfad in Unternehmen speichern
-                    _unternehmen.LetzteBewerbungPfad = zielPfad;
+                    _unternehmen!.LetzteBewerbungPfad = zielPfad;
 
                     // Zeige den Continue-Button, da wir mit einer Vorlage weiterarbeiten
                     _unternehmenElement.ShowContinueButton();
 
-                    // Öffne die Datei direkt in Word (nicht im Explorer)
+                    // Öffne die Datei direkt in Word
                     Process.Start(new ProcessStartInfo
                     {
                         FileName = zielPfad,
                         UseShellExecute = true,
-                        Verb = "open" // sorgt dafür, dass die Datei direkt geöffnet wird
+                        Verb = "open"
                     });
+
+                    // 🔹 Fenster nach Auswahl schließen
+                    this.DialogResult = true;  // falls ShowDialog() verwendet wurde
+                    this.Close();
                 }
                 catch (Exception ex)
                 {

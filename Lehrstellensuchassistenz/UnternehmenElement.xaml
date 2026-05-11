@@ -125,7 +125,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Erstellt:" FontSize="20" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding ErstellDatum, StringFormat='dd.MM.yyyy'}" VerticalAlignment="Center" FontSize="20"/>
+                <TextBlock Grid.Column="1" Text="{Binding ErstellDatumMitZeit}" VerticalAlignment="Center" FontSize="20"/>
             </Grid>
         </StackPanel>
 

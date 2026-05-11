@@ -101,6 +101,7 @@ namespace Lehrstellensuchassistenz
         }
 
         private DateTime erstellDatum = DateTime.Now;
+        public string ErstellDatumMitZeit => ErstellDatum.ToString("dd.MM.yyyy HH:mm");
         public DateTime ErstellDatum
         {
             get => erstellDatum;

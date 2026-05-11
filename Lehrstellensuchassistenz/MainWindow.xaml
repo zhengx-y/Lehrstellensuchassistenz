@@ -5,12 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lehrstellensuchassistenz"
         mc:Ignorable="d"
-        Title="Lehrstellensuchassistenz v1.0.0-alpha"
+        Title="Lehrstellensuchassistenz v1.1.0"
         Height="720"
         Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <ScaleTransform x:Key="TopScale" ScaleX="1" ScaleY="1"/>
+        <ScaleTransform x:Key="SideScale" ScaleX="1" ScaleY="1"/>
+    </Window.Resources>
 
-    <Grid Background="{StaticResource BackgroundBrush}">
+    <Grid Background="{StaticResource BackgroundBrush}"
+      PreviewMouseWheel="Window_PreviewMouseWheel">
 
         <!-- RowDefinitions: Top Buttons, Bar, Main Content -->
         <Grid.RowDefinitions>
@@ -23,61 +28,64 @@
         </Grid.RowDefinitions>
 
         <!-- Top Buttons Row -->
-        <Grid Grid.Row="0" Margin="10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <!-- Left buttons -->
-                <ColumnDefinition Width="Auto"/>
-                <!-- Right: Sort / Add -->
-            </Grid.ColumnDefinitions>
+            <Grid x:Name="TopBarGrid" RenderTransform="{StaticResource TopScale}" RenderTransformOrigin="0,0"
+      Grid.Row="0"
+      Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <!-- Left buttons -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Right: Sort / Add -->
+                </Grid.ColumnDefinitions>
 
-            <!-- Left Buttons -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
-                <Button Content="Zurück" Width="60" Height="40" Margin="0,0,10,0" Click="ReturnPage_Click"/>
-                <Button Content="Alle Änderungen Bisher Speichern" Width="200" Height="40" Margin="0,0,10,0" Click="SaveCompanies_Click"/>
-                <Button Content="Ausgewählte Element Löschen" Width="180" Height="40" Click="Delete_Click"/>
-            </StackPanel>
+                <!-- Left Buttons -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Content="Zurück" Width="60" Height="40" Margin="0,0,10,0" Click="ReturnPage_Click"/>
+                    <Button Content="Alle Änderungen Bisher Speichern" Width="200" Height="40" Margin="0,0,10,0" Click="SaveCompanies_Click"/>
+                    <Button Content="Ausgewählte Element Löschen" Width="180" Height="40" Click="Delete_Click"/>
+                </StackPanel>
 
-            <!-- Right Buttons -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <ComboBox x:Name="SortComboBox"
+                <!-- Right Buttons -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <ComboBox x:Name="SortComboBox"
           Width="160" Height="40" Margin="0,0,10,0"
           SelectionChanged="SortComboBox_SelectionChanged"
           HorizontalContentAlignment="Left"
           VerticalContentAlignment="Center"
           SelectedIndex="0">
-                    <!-- Platzhalter -->
-                    <ComboBoxItem IsEnabled="False" Content="Sortieren" />
 
-                    <!-- Datum -->
-                    <ComboBoxItem Content="Älteste" Tag="DateAsc"/>
-                    <ComboBoxItem Content="Neueste" Tag="DateDesc"/>
+                        <!-- Datum -->
+                        <ComboBoxItem Content="Älteste" Tag="DateAsc"/>
+                        <ComboBoxItem Content="Neueste" Tag="DateDesc"/>
 
-                    <!-- Name -->
-                    <ComboBoxItem Content="Name A→Z" Tag="NameAsc"/>
-                    <ComboBoxItem Content="Name Z→A" Tag="NameDesc"/>
-                </ComboBox>
+                        <!-- Name -->
+                        <ComboBoxItem Content="Name A→Z" Tag="NameAsc"/>
+                        <ComboBoxItem Content="Name Z→A" Tag="NameDesc"/>
+                    </ComboBox>
 
-                <Button Content="Unternehmen hinzufügen" Width="150" Height="40" Click="AddCompany_Click"/>
-            </StackPanel>
-        </Grid>
-
-        <!-- Top Horizontal Bar -->
+                    <Button Content="Unternehmen hinzufügen" Width="150" Height="40" Click="AddCompany_Click"/>
+                </StackPanel>
+            </Grid>
+            
+            <!-- Top Horizontal Bar -->
         <Border Grid.Row="1" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Stretch"/>
 
         <!-- Main Content -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
                 <!-- Sidebar -->
                 <ColumnDefinition Width="5"/>
                 <!-- Separator -->
                 <ColumnDefinition Width="*"/>
-                <!-- Frame -->
+                <!-- Main Frame -->
             </Grid.ColumnDefinitions>
 
             <!-- Sidebar Buttons -->
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer x:Name="SidebarScrollViewer" RenderTransform="{StaticResource SideScale}" RenderTransformOrigin="0,0"
+              Grid.Column="0"
+              VerticalScrollBarVisibility="Auto"
+              HorizontalScrollBarVisibility="Disabled">
                 <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top">
                     <Button Content="Lebenslauf" Width="180" Height="40" Margin="10" Background="LightGreen" Click="Lebenslauf_Click"/>
 
@@ -100,6 +108,5 @@
             <!-- Main Frame -->
             <Frame x:Name="MainFrame" Grid.Column="2" Margin="10" NavigationUIVisibility="Hidden"/>
         </Grid>
-
     </Grid>
 </Window>

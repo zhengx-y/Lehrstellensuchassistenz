@@ -8,6 +8,8 @@ using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using IWshRuntimeLibrary;
 
 namespace Lehrstellensuchassistenz
 {
@@ -21,14 +23,152 @@ namespace Lehrstellensuchassistenz
         {
             InitializeComponent();
 
-            // Ordner sicherstellen
+            // ObservableCollection für Firmen initialisieren
             Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-
-            // ObservableCollection automatisch speichern, wenn sich etwas ändert
             Companies.CollectionChanged += (s, e) => SaveCompanies();
-
             LoadCompanies();
             MainFrame.Navigate(new CompanyListPage(Companies));
+
+            // Shortcut prüfen und ggf. erstellen
+            CheckDesktopShortcut();
+
+            ShowWelcomePopup();
+        }
+
+        private const string RegistryKeyPath = @"SOFTWARE\Lehrstellensuchassistenz";
+        private const string RegistryValueName = "DesktopShortcutAsked";
+
+        private void CheckDesktopShortcut()
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
+            object? value = key?.GetValue(RegistryValueName);
+
+            if (value == null) // Noch nie gefragt
+            {
+                var result = MessageBox.Show(
+                    "Soll eine Verknüpfung auf dem Desktop erstellt werden?",
+                    "Verknüpfung erstellen",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question
+                );
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    CreateDesktopShortcut();
+                    key?.SetValue(RegistryValueName, "Yes"); // gemerkt
+                }
+                else if (result == MessageBoxResult.No)
+                {
+                    key?.SetValue(RegistryValueName, "No"); // gemerkt
+                }
+                // Cancel → nichts speichern, nächstes Mal wieder fragen
+            }
+        }
+
+        private const string WelcomeShownValue = "WelcomeShown";
+
+        private void ShowWelcomePopup()
+        {
+            this.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                using var key = Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
+                object? value = key?.GetValue(WelcomeShownValue);
+
+                if (value == null)
+                {
+                    // TextBlock für den Popup-Inhalt
+                    var textBlock = new TextBlock
+                    {
+                        Text = @"Willkommen bei der Lehrstellensuchassistenz!
+Oben findest du die wichtigsten Buttons:
+- 'Zurück': Navigiert zur vorherigen Seite
+- 'Alle Änderungen bisher speichern': Speichert alle aktuellen Änderungen
+- 'Ausgewähltes Element löschen': Löscht die aktuell ausgewählte Firma
+
+Rechts oben:
+- 'Sortieren' ComboBox: Sortiert Firmen nach Name oder Datum
+- 'Unternehmen hinzufügen': Öffnet das Formular, um eine neue Firma hinzuzufügen
+
+Links in der Sidebar:
+- 'Lebenslauf': Hier kannst du dein Lebenslauf-PDF hochladen und später öffnen
+- 'Bewerbungen': Öffnet den Bewerbungsordner
+- AMS, karriere.at, WKO, lehrstelle.at, lehrstellenportal.at, DevJobs: Öffnet die jeweiligen Webseiten
+- 'Einstellungen': Platzhalter-Button für zukünftige Optionen
+
+Im Hauptbereich:
+- Du kannst alle deine gespeicherten Unternehmen bearbeiten
+
+Die Ansicht kann mit Strg + Mausrad gezoomt werden.",
+                        FontSize = 18,
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(20)
+                    };
+
+                    // OK-Button
+                    var closeButton = new Button
+                    {
+                        Content = "OK",
+                        Width = 120,
+                        Height = 40,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Margin = new Thickness(0, 15, 0, 15),
+                        FontSize = 16,
+                        FontWeight = FontWeights.SemiBold
+                    };
+
+                    // Popup-Fenster
+                    var popup = new Window
+                    {
+                        Title = "Willkommen!",
+                        SizeToContent = SizeToContent.Height, // Höhe passt sich Text + Button an
+                        Width = 700,                          // feste Breite
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Owner = this,
+                        ResizeMode = ResizeMode.NoResize,
+                        Content = new StackPanel
+                        {
+                            Children =
+                    {
+                        textBlock,
+                        closeButton
+                    }
+                        }
+                    };
+
+                    closeButton.Click += (s, e) => popup.Close();
+
+                    popup.ShowDialog();
+
+                    key?.SetValue(WelcomeShownValue, "Yes");
+                }
+            }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        }
+
+        private void CreateDesktopShortcut()
+        {
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            string shortcutLocation = Path.Combine(desktopPath, "Lehrstellensuchassistenz.lnk");
+
+            string exePath = Process.GetCurrentProcess().MainModule!.FileName;
+
+            // Pfad zum Icon in deinem Projekt-Ordner
+            string projectFolder = Path.GetDirectoryName(exePath)!;
+            string iconPath = Path.Combine(projectFolder, "resources", "images", "shortcut_icon.ico");
+
+            if (!System.IO.File.Exists(iconPath))
+            {
+                MessageBox.Show("Icon-Datei nicht gefunden: " + iconPath);
+                iconPath = exePath; // Fallback auf EXE-Icon
+            }
+
+            // WshShell Shortcut erstellen
+            WshShell shell = new WshShell();
+            IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutLocation);
+            shortcut.Description = "Lehrstellensuchassistenz";
+            shortcut.TargetPath = exePath;
+            shortcut.WorkingDirectory = Path.GetDirectoryName(exePath);
+            shortcut.IconLocation = iconPath; // Eigenes Icon
+            shortcut.Save();
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -49,6 +189,89 @@ namespace Lehrstellensuchassistenz
             }
         }
 
+        // Globale Variable in deiner MainWindow-Klasse
+        private int zoomLevel = 0;       // Default 0
+        private const int zoomMin = 0;   // 0 = Standardgröße
+        private const int zoomMax = 4;   // 4 Schritte maximal
+
+        private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+            {
+                if (e.Delta > 0 && zoomLevel < zoomMax)
+                {
+                    zoomLevel++;
+                    ZoomUI(1.1);  // 10% vergrößern
+                }
+                else if (e.Delta < 0 && zoomLevel > zoomMin)
+                {
+                    zoomLevel--;
+                    ZoomUI(1 / 1.1);  // 10% verkleinern
+                }
+
+                e.Handled = true;
+            }
+        }
+
+        private void ZoomUI(double zoomFactor)
+        {
+            // --- Top Bar ---
+            TopBarGrid.Margin = new Thickness(
+                TopBarGrid.Margin.Left * zoomFactor,
+                TopBarGrid.Margin.Top * zoomFactor,
+                TopBarGrid.Margin.Right * zoomFactor,
+                TopBarGrid.Margin.Bottom * zoomFactor
+            );
+
+            foreach (var child in ((StackPanel)TopBarGrid.Children[0]).Children)
+            {
+                if (child is Button btn)
+                {
+                    btn.Width *= zoomFactor;
+                    btn.Height *= zoomFactor;
+                    btn.FontSize *= zoomFactor; // Text mitzoomen
+                }
+            }
+
+            foreach (var child in ((StackPanel)TopBarGrid.Children[1]).Children)
+            {
+                if (child is Button btn)
+                {
+                    btn.Width *= zoomFactor;
+                    btn.Height *= zoomFactor;
+                    btn.FontSize *= zoomFactor;
+                }
+                else if (child is ComboBox cb)
+                {
+                    cb.Width *= zoomFactor;
+                    cb.Height *= zoomFactor;
+                    cb.FontSize *= zoomFactor; // Text in ComboBox
+                }
+            }
+
+            // --- Sidebar ---
+            SidebarScrollViewer.Width *= zoomFactor;
+
+            if (SidebarScrollViewer.Content is StackPanel sidebarPanel)
+            {
+                foreach (var child in sidebarPanel.Children)
+                {
+                    if (child is Button btn)
+                    {
+                        btn.Width *= zoomFactor;
+                        btn.Height *= zoomFactor;
+                        btn.FontSize *= zoomFactor; // Text mitzoomen
+                        btn.Margin = new Thickness(
+                            btn.Margin.Left * zoomFactor,
+                            btn.Margin.Top * zoomFactor,
+                            btn.Margin.Right * zoomFactor,
+                            btn.Margin.Bottom * zoomFactor
+                        );
+                    }
+                }
+            }
+        }
+
         public void SaveCompanies()
         {
             var options = new JsonSerializerOptions
@@ -58,14 +281,14 @@ namespace Lehrstellensuchassistenz
             };
 
             string json = JsonSerializer.Serialize(Companies, options);
-            File.WriteAllText(filePath, json);
+            System.IO.File.WriteAllText(filePath, json);
         }
         private void LoadCompanies()
         {
-            if (!File.Exists(filePath))
+            if (!System.IO.File.Exists(filePath))
             {
                 // Datei leer anlegen, falls nicht vorhanden
-                File.WriteAllText(filePath, "[]");
+                System.IO.File.WriteAllText(filePath, "[]");
             }
 
             var options = new JsonSerializerOptions
@@ -73,7 +296,7 @@ namespace Lehrstellensuchassistenz
                 Converters = { new JsonStringEnumConverter() }
             };
 
-            string json = File.ReadAllText(filePath);
+            string json = System.IO.File.ReadAllText(filePath);
             var loaded = JsonSerializer.Deserialize<ObservableCollection<Unternehmen>>(json, options);
 
             if (loaded != null)
@@ -126,21 +349,41 @@ namespace Lehrstellensuchassistenz
 
         private void Delete_Click(object sender, RoutedEventArgs e)
         {
-            if (MainFrame.Content is CompanyListPage page && page.SelectedCompany != null)
+            Unternehmen? companyToDelete = null;
+
+            if (MainFrame.Content is CompanyListPage listPage && listPage.SelectedCompany != null)
             {
-                var company = page.SelectedCompany;
+                // Fall 1: CompanyListPage
+                companyToDelete = listPage.SelectedCompany;
+            }
+            else if (MainFrame.Content is UnternehmenElement detailPage && detailPage.Company != null)
+            {
+                // Fall 2: Detailansicht
+                companyToDelete = detailPage.Company;
+            }
+
+            if (companyToDelete != null)
+            {
                 MessageBoxResult result = MessageBox.Show(
-                    $"Soll die Firma \"{company.Name}\" wirklich gelöscht werden?",
+                    $"Soll die Firma \"{companyToDelete.Name}\" wirklich gelöscht werden?",
                     "Löschen bestätigen",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question
                 );
+
                 if (result == MessageBoxResult.Yes)
                 {
-                    Companies.Remove(company);
+                    Companies.Remove(companyToDelete);
+
+                    // Optional: Zurück zur Listenansicht navigieren
+                    if (MainFrame.Content is UnternehmenElement)
+                    {
+                        MainFrame.Navigate(new CompanyListPage(Companies));
+                    }
                 }
             }
         }
+
         private void Sort_Click(object sender, RoutedEventArgs e) // NUR PLATZHALTER
         {
             MessageBox.Show("Button funktioniert!");
@@ -158,7 +401,7 @@ namespace Lehrstellensuchassistenz
 
         private void Link_Click(object sender, RoutedEventArgs e)
         {
-            Button button = sender as Button;
+            Button? button = sender as Button;
             if (button == null)
                 return;
 
@@ -248,13 +491,13 @@ namespace Lehrstellensuchassistenz
                 string pdfDateiPfadBewerbungen = Path.Combine(bewerbungenOrdner, "Lebenslauf.pdf");
 
                 // Überprüfen, ob die Datei im "user-files"-Ordner existiert
-                if (File.Exists(pdfDateiPfadUserFiles))
+                if (System.IO.File.Exists(pdfDateiPfadUserFiles))
                 {
                     // Wenn die Datei existiert, kopiere sie auch in den Bewerbungsordner, falls sie noch nicht da ist
-                    if (!File.Exists(pdfDateiPfadBewerbungen))
+                    if (!System.IO.File.Exists(pdfDateiPfadBewerbungen))
                     {
                         // Datei in den Bewerbungsordner kopieren
-                        File.Copy(pdfDateiPfadUserFiles, pdfDateiPfadBewerbungen, true);
+                        System.IO.File.Copy(pdfDateiPfadUserFiles, pdfDateiPfadBewerbungen, true);
                     }
 
                     // Öffne das PDF aus dem "user-files"-Ordner
@@ -285,10 +528,10 @@ namespace Lehrstellensuchassistenz
                         try
                         {
                             // Kopiere die Datei in den "user-files"-Ordner
-                            File.Copy(ausgewaehlteDatei, pdfDateiPfadUserFiles, true); // Überschreibt die Datei, falls sie bereits existiert
+                            System.IO.File.Copy(ausgewaehlteDatei, pdfDateiPfadUserFiles, true); // Überschreibt die Datei, falls sie bereits existiert
 
                             // Kopiere die Datei auch in den Bewerbungsordner
-                            File.Copy(pdfDateiPfadUserFiles, pdfDateiPfadBewerbungen, true); // Überschreibt die Datei, falls sie bereits existiert
+                            System.IO.File.Copy(pdfDateiPfadUserFiles, pdfDateiPfadBewerbungen, true); // Überschreibt die Datei, falls sie bereits existiert
 
                             // Öffne das PDF
                             Process.Start(new ProcessStartInfo

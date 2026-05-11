@@ -11,18 +11,107 @@ namespace Lehrstellensuchassistenz
     {
         public Unternehmen Company { get; }
 
+        private const string RegistryKeyPath = @"SOFTWARE\Lehrstellensuchassistenz";
+        private const string WelcomeShownValue = "UnternehmenElementWelcomeShown";
+
         public UnternehmenElement(Unternehmen company)
         {
             InitializeComponent();
             Company = company;
             this.DataContext = Company;
 
-            // 🔄 Bild laden wenn vorhanden
+            // 🔹 Popup beim ersten Start
+            ShowWelcomePopupIfNeeded();
+
+            // 🔹 Foto laden
+            LoadPhoto();
+
+            // 🔹 PropertyChanged speichern
+            Company.PropertyChanged += (s, e) =>
+            {
+                if (Application.Current.MainWindow is MainWindow main)
+                {
+                    main.SaveCompanies();
+                }
+            };
+        }
+
+        private void ShowWelcomePopupIfNeeded()
+        {
+            this.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                using var key = Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
+                object? value = key?.GetValue(WelcomeShownValue);
+
+                if (value == null)
+                {
+                    // TextBlock für Popup-Inhalt
+                    var textBlock = new TextBlock
+                    {
+                        Text = @"Willkommen im Unternehmen-Detailbereich!
+
+🔹 Oben links: Name, Link, Status sowie Datum und Uhrzeit der Erstellung des Elements
+
+🔹 Oben rechts: Foto auswählen
+
+🔹 Mitte: Notizen
+
+🔹 Unten links: Wenn alle Felder ausgefüllt sind, inklusive hochgeladenem Foto, erscheint der Button: Bewerben! / Schreiben fortsetzen
+
+🔹 Unten rechts: Bewerbungstipps / Lebenslauftipps",
+                        FontSize = 18,
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(20)
+                    };
+
+                    // OK-Button
+                    var okButton = new Button
+                    {
+                        Content = "OK",
+                        Width = 120,
+                        Height = 40,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Margin = new Thickness(0, 15, 0, 15),
+                        FontSize = 16,
+                        FontWeight = FontWeights.SemiBold
+                    };
+
+                    // Popup-Fenster
+                    var popup = new Window
+                    {
+                        Title = "Willkommen!",
+                        Width = 700,                     // feste Breite
+                        SizeToContent = SizeToContent.Height, // Höhe passt sich Inhalt an
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Owner = Window.GetWindow(this),
+                        ResizeMode = ResizeMode.NoResize,
+                        Content = new StackPanel
+                        {
+                            Children =
+                    {
+                        textBlock,
+                        okButton
+                    }
+                        }
+                    };
+
+                    okButton.Click += (s, e) => popup.Close();
+
+                    popup.ShowDialog();
+
+                    // Wert speichern, dass Popup schon angezeigt wurde
+                    key?.SetValue(WelcomeShownValue, "Yes");
+                }
+            }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        }
+
+        private void LoadPhoto()
+        {
             if (!string.IsNullOrEmpty(Company.FotoReferenz) && File.Exists(Company.FotoReferenz))
             {
                 try
                 {
-                    BitmapImage bitmap = new BitmapImage();
+                    var bitmap = new BitmapImage();
                     bitmap.BeginInit();
                     bitmap.UriSource = new Uri(Company.FotoReferenz);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -36,14 +125,6 @@ namespace Lehrstellensuchassistenz
                     Company.FotoReferenz = null;
                 }
             }
-
-            Company.PropertyChanged += (s, e) =>
-            {
-                if (Application.Current.MainWindow is MainWindow main)
-                {
-                    main.SaveCompanies();
-                }
-            };
         }
 
         private void Sort_Click(object sender, RoutedEventArgs e)
@@ -60,7 +141,7 @@ namespace Lehrstellensuchassistenz
 
         private void Tipps_Click(object sender, RoutedEventArgs e)
         {
-            Button button = sender as Button;
+            Button? button = sender as Button;
             if (button == null)
                 return;
 
