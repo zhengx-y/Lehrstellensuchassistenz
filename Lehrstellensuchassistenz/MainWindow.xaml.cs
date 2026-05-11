@@ -1,5 +1,7 @@
 ﻿using Lehrstellensuchassistenz;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -144,6 +146,170 @@ namespace Lehrstellensuchassistenz
             MessageBox.Show("Button funktioniert!");
         }
 
+        public enum WebSiteType
+        {
+            AMS,
+            KarriereAt,
+            WKO,
+            LehrstelleAt,
+            LehrstellenPortalAt,
+            DevJobs
+        }
+
+        private void Link_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            if (button == null)
+                return;
+
+            // Basierend auf dem Content des Buttons eine Aktion ausführen
+            WebSiteType websiteType = WebSiteType.AMS; // Default
+
+            switch (button.Content.ToString())
+            {
+                case "AMS":
+                    websiteType = WebSiteType.AMS;
+                    break;
+                case "karriere.at":
+                    websiteType = WebSiteType.KarriereAt;
+                    break;
+                case "WKO":
+                    websiteType = WebSiteType.WKO;
+                    break;
+                case "lehrstelle.at":
+                    websiteType = WebSiteType.LehrstelleAt;
+                    break;
+                case "lehrstellenportal.at":
+                    websiteType = WebSiteType.LehrstellenPortalAt;
+                    break;
+                case "DevJobs":
+                    websiteType = WebSiteType.DevJobs;
+                    break;
+                default:
+                    return;
+            }
+
+            // Jetzt kannst du das Enum `websiteType` verwenden, um die Seite zu öffnen
+            OpenWebsite(websiteType);
+        }
+
+        // Diese Methode wird später verwendet, um die Seiten zu öffnen, basierend auf dem Enum
+        private void OpenWebsite(WebSiteType site)
+        {
+            string url = string.Empty;
+
+            switch (site)
+            {
+                case WebSiteType.AMS:
+                    url = "https://www.ams.at";
+                    break;
+                case WebSiteType.KarriereAt:
+                    url = "https://www.karriere.at";
+                    break;
+                case WebSiteType.WKO:
+                    url = "https://lehrbetriebsuebersicht.wko.at/SearchLehrbetrieb.aspx";
+                    break;
+                case WebSiteType.LehrstelleAt:
+                    url = "https://www.lehrstelle.at";
+                    break;
+                case WebSiteType.LehrstellenPortalAt:
+                    url = "https://www.lehrstellenportal.at";
+                    break;
+                case WebSiteType.DevJobs:
+                    url = "https://www.devjobs.at";
+                    break;
+            }
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+        }
+
+        private void Lebenslauf_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Bestimme den AppData-Pfad zum "user-files"-Ordner und "bewerbungen"-Ordner
+                string userFilesOrdner = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Lehrstellensuchassistenz",
+                    "user-files"
+                );
+
+                string bewerbungenOrdner = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Lehrstellensuchassistenz",
+                    "bewerbungen"
+                );
+
+                // Den Dateipfad für das PDF (z.B. "Lebenslauf.pdf")
+                string pdfDateiPfadUserFiles = Path.Combine(userFilesOrdner, "Lebenslauf.pdf");
+                string pdfDateiPfadBewerbungen = Path.Combine(bewerbungenOrdner, "Lebenslauf.pdf");
+
+                // Überprüfen, ob die Datei im "user-files"-Ordner existiert
+                if (File.Exists(pdfDateiPfadUserFiles))
+                {
+                    // Wenn die Datei existiert, kopiere sie auch in den Bewerbungsordner, falls sie noch nicht da ist
+                    if (!File.Exists(pdfDateiPfadBewerbungen))
+                    {
+                        // Datei in den Bewerbungsordner kopieren
+                        File.Copy(pdfDateiPfadUserFiles, pdfDateiPfadBewerbungen, true);
+                    }
+
+                    // Öffne das PDF aus dem "user-files"-Ordner
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = pdfDateiPfadUserFiles,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    // Falls die Datei nicht im "user-files"-Ordner existiert, öffne den OpenFileDialog
+                    OpenFileDialog dialog = new OpenFileDialog
+                    {
+                        Title = "Wählen Sie Ihren Lebenslauf aus",
+                        Filter = "PDF-Dokumente (*.pdf)|*.pdf", // Nur PDF-Dateien
+                        Multiselect = false // Keine Mehrfachauswahl
+                    };
+
+                    if (dialog.ShowDialog() == true)
+                    {
+                        string ausgewaehlteDatei = dialog.FileName;
+
+                        // Sicherstellen, dass beide Ordner existieren
+                        Directory.CreateDirectory(userFilesOrdner);
+                        Directory.CreateDirectory(bewerbungenOrdner);
+
+                        try
+                        {
+                            // Kopiere die Datei in den "user-files"-Ordner
+                            File.Copy(ausgewaehlteDatei, pdfDateiPfadUserFiles, true); // Überschreibt die Datei, falls sie bereits existiert
+
+                            // Kopiere die Datei auch in den Bewerbungsordner
+                            File.Copy(pdfDateiPfadUserFiles, pdfDateiPfadBewerbungen, true); // Überschreibt die Datei, falls sie bereits existiert
+
+                            // Öffne das PDF
+                            Process.Start(new ProcessStartInfo
+                            {
+                                FileName = pdfDateiPfadUserFiles,
+                                UseShellExecute = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Fehler beim Speichern der Datei: " + ex.Message);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Fehler: " + ex.Message);
+            }
+        }
+
         // Sortieren nach Datum
         private void SortByDate(bool ascending = true)
         {
@@ -200,6 +366,32 @@ namespace Lehrstellensuchassistenz
 
                 // ComboBox neu auf ausgewähltes Item setzen (optional)
                 // SortComboBox.SelectedItem = null;  // falls du möchtest, dass keine Auswahl sichtbar bleibt
+            }
+        }
+        private void OpenBewerbungen_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string bewerbungenOrdner = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Lehrstellensuchassistenz",
+                    "bewerbungen"
+                );
+
+                // Ordner anlegen, falls er nicht existiert
+                Directory.CreateDirectory(bewerbungenOrdner);
+
+                // Explorer öffnen
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = bewerbungenOrdner,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Fehler beim Öffnen des Bewerbungen-Ordners: " + ex.Message);
             }
         }
     }

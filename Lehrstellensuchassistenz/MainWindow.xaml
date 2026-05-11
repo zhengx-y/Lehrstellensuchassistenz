@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lehrstellensuchassistenz"
         mc:Ignorable="d"
-        Title="Lehrstellensuchassistenz v0.2.0-alpha"
+        Title="Lehrstellensuchassistenz v1.0.0-alpha"
         Height="720"
         Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown">
@@ -79,13 +79,17 @@
             <!-- Sidebar Buttons -->
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top">
-                    <Button Content="Lebenslauf" Width="180" Height="40" Margin="10" Background="LightGreen" Click="Sort_Click"/>
-                    <Button Content="AMS" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                    <Button Content="DevJobs" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                    <Button Content="WKO" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                    <Button Content="lehrstelle.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                    <Button Content="karriere.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
-                    <Button Content="lehrstellenportal.at" Width="180" Height="40" Margin="10" Click="Sort_Click"/>
+                    <Button Content="Lebenslauf" Width="180" Height="40" Margin="10" Background="LightGreen" Click="Lebenslauf_Click"/>
+
+                    <!-- Neuer Button: Bewerbungen -->
+                    <Button Content="Bewerbungen" Width="180" Height="40" Margin="10" Background="LightBlue" Click="OpenBewerbungen_Click"/>
+
+                    <Button Content="AMS" Width="180" Height="40" Margin="10" Click="Link_Click"/>
+                    <Button Content="karriere.at" Width="180" Height="40" Margin="10" Click="Link_Click"/>
+                    <Button Content="WKO" Width="180" Height="40" Margin="10" Click="Link_Click"/>
+                    <Button Content="lehrstelle.at" Width="180" Height="40" Margin="10" Click="Link_Click"/>
+                    <Button Content="lehrstellenportal.at" Width="180" Height="40" Margin="10" Click="Link_Click"/>
+                    <Button Content="DevJobs" Width="180" Height="40" Margin="10" Click="Link_Click"/>
                     <Button Content="Einstellungen" Width="180" Height="40" Margin="10" Background="DarkGray" Click="Sort_Click"/>
                 </StackPanel>
             </ScrollViewer>
