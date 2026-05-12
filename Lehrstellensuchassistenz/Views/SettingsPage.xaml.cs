@@ -92,7 +92,7 @@ namespace Lehrstellensuchassistenz.Views
             if (!delUserData && !delApp) return;
 
             var result = MessageBox.Show(
-                "Bist du sicher? Wenn du die App löschst, wird sie sofort beendet und entfernt.",
+                "Bist du sicher? Die ausgewählten Aktionen werden sofort ausgeführt. Die App wird anschließend beendet.",
                 "Cleanup Bestätigung", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
             if (result == MessageBoxResult.Yes)
