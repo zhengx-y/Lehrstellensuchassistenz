@@ -36,51 +36,64 @@ namespace Lehrstellensuchassistenz.Views
         private void ChangeStoragePath_Click(object sender, RoutedEventArgs e)
         {
             var fileService = new FileService();
-            // 1. Hole den Pfad, der GERADE in der TextBox steht
             string oldPath = PathTextBox.Text;
 
-            // 2. Dialog öffnen
+            // 1. Dialog öffnen
             string newPath = fileService.ChooseAndSaveNewPath(oldPath);
 
-            if (!string.IsNullOrEmpty(newPath) && newPath != oldPath)
+            // Nur fortfahren, wenn ein Pfad gewählt wurde und dieser anders ist als der alte
+            if (string.IsNullOrEmpty(newPath) || newPath.Equals(oldPath, StringComparison.OrdinalIgnoreCase))
             {
-                // UI SOFORT AKTUALISIEREN
-                PathTextBox.Text = newPath;
+                return;
+            }
 
-                // Damit WPF die Anzeige sofort neu zeichnet (optional aber sicher)
-                PathTextBox.UpdateLayout();
+            // UI SOFORT AKTUALISIEREN
+            PathTextBox.Text = newPath;
 
-                var moveResult = MessageBox.Show(
-                    "Möchtest du deine vorhandenen Daten an den neuen Ort verschieben?",
-                    "Daten umziehen", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+            var moveResult = MessageBox.Show(
+                "Möchtest du deine vorhandenen Daten an den neuen Ort verschieben?\n\n" +
+                "Ja: Daten umziehen & neuen Pfad nutzen.\n" +
+                "Nein: Nur neuen Pfad nutzen (leere Datenbank).\n" +
+                "Abbrechen: Nichts ändern.",
+                "Daten umziehen", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 
-                if (moveResult == MessageBoxResult.Cancel)
+            if (moveResult == MessageBoxResult.Cancel)
+            {
+                PathTextBox.Text = oldPath;
+                return;
+            }
+
+            try
+            {
+                if (moveResult == MessageBoxResult.Yes)
                 {
-                    // Falls abgebrochen, UI wieder zurücksetzen
-                    PathTextBox.Text = oldPath;
-                    return;
+                    fileService.MigrateData(oldPath, newPath);
+                }
+                else
+                {
+                    fileService.SaveStoragePath(newPath);
                 }
 
-                try
-                {
-                    if (moveResult == MessageBoxResult.Yes)
-                    {
-                        fileService.MigrateData(oldPath, newPath);
-                    }
-                    else
-                    {
-                        fileService.SaveStoragePath(newPath);
-                    }
+                MessageBox.Show("Speicherort aktualisiert. Die App startet nun neu.", "Neustart erforderlich", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    MessageBox.Show("Speicherort aktualisiert. Die App startet nun neu.");
-                    System.Diagnostics.Process.Start(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+                // --- SICHERER NEUSTART ---
+                var processPath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+                if (processPath != null)
+                {
+                    System.Diagnostics.Process.Start(processPath);
                     Application.Current.Shutdown();
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show($"Fehler: {ex.Message}");
-                    PathTextBox.Text = oldPath; // Bei Fehler zurückrollen
+                    // Fallback falls MainModule null ist (extrem selten)
+                    MessageBox.Show("Bitte starten Sie die App manuell neu.");
+                    Application.Current.Shutdown();
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Verschieben der Daten: {ex.Message}", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+                PathTextBox.Text = oldPath; // Rollback in der UI
             }
         }
 
