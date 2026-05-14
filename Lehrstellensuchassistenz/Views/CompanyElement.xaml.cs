@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using static Lehrstellensuchassistenz.Models.Company;
 
@@ -19,6 +18,9 @@ namespace Lehrstellensuchassistenz.Views
     {
         public Company Company { get; }
         private bool _isUpdating = false;
+
+        // Instanziierung des neuen Services
+        private readonly NotizenBoxImageInsertService _imageService = new NotizenBoxImageInsertService();
 
         public CompanyElement(Company company)
         {
@@ -42,7 +44,6 @@ namespace Lehrstellensuchassistenz.Views
             };
         }
 
-        // Zwingend PUBLIC, damit das MainWindow oder TemplatesWindow darauf zugreifen kann
         public void SyncNotizenToModel()
         {
             if (NotizenBox == null || Company == null) return;
@@ -64,7 +65,6 @@ namespace Lehrstellensuchassistenz.Views
             }
         }
 
-        // Jetzt PUBLIC, um den Fehler im TemplatesWindow zu beheben
         public void LoadNotizen()
         {
             if (NotizenBox == null) return;
@@ -80,7 +80,6 @@ namespace Lehrstellensuchassistenz.Views
                 }
                 else
                 {
-                    // Falls das Model leer ist, Box leeren
                     NotizenBox.Document.Blocks.Clear();
                 }
             }
@@ -109,30 +108,26 @@ namespace Lehrstellensuchassistenz.Views
 
         private void NotizenBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Tab) { EditingCommands.TabForward.Execute(null, NotizenBox); e.Handled = true; }
+            // 1. Tab-Logik
+            if (e.Key == Key.Tab)
+            {
+                EditingCommands.TabForward.Execute(null, NotizenBox);
+                e.Handled = true;
+                return;
+            }
+
+            // 2. Bild-Einfügen via Service
             if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
-                if (Clipboard.ContainsImage())
+                // Der Service prüft intern auf Clipboard.ContainsImage()
+                if (_imageService.HandleImagePaste(NotizenBox, 500))
                 {
                     e.Handled = true;
-                    NotizenBox.Paste();
-                    ScaleLastInsertedImage(500);
                 }
             }
         }
 
-        private void ScaleLastInsertedImage(double maxWidth)
-        {
-            foreach (var block in NotizenBox.Document.Blocks.Reverse())
-                if (block is Paragraph p)
-                    foreach (var inline in p.Inlines.Reverse())
-                        if (inline is InlineUIContainer container && container.Child is Image img)
-                        {
-                            img.Width = maxWidth;
-                            img.Stretch = Stretch.Uniform;
-                            return;
-                        }
-        }
+        // ScaleLastInsertedImage wurde entfernt, da die Logik nun im Service liegt.
 
         private void OpenLink_Click(object sender, RoutedEventArgs e)
         {
@@ -144,7 +139,6 @@ namespace Lehrstellensuchassistenz.Views
         {
             if (sender is Button btn && btn.Tag != null)
             {
-                // Nutzt das Enum direkt aus der Company-Klasse
                 var type = btn.Tag.ToString() == "Bewerbungstipps" ? TippsType.Bewerbungstipps : TippsType.Lebenslauftipps;
                 BrowserService.OpenTipps(type);
             }
@@ -152,9 +146,7 @@ namespace Lehrstellensuchassistenz.Views
 
         private void Apply_Click(object sender, RoutedEventArgs e)
         {
-            // Vor dem Öffnen synchronisieren
             SyncNotizenToModel();
-
             var templatesWin = new TemplatesWindow(Company, this);
             templatesWin.Owner = Application.Current.MainWindow;
             templatesWin.ShowDialog();
