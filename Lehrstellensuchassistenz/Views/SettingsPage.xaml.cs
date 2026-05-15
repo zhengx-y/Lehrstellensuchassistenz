@@ -1,7 +1,9 @@
 ﻿using Lehrstellensuchassistenz.Models;
 using Lehrstellensuchassistenz.Services;
-using Microsoft.Win32; // Für Registry & Dialoge
+using Lehrstellensuchassistenz.Resources.Languages; // Wichtig
+using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -9,10 +11,14 @@ namespace Lehrstellensuchassistenz.Views
 {
     public partial class SettingsPage : Page
     {
+        private bool _isPageInitialized = false;
+
         public SettingsPage()
         {
             InitializeComponent();
             LoadCurrentSettings();
+            LoadSettingsIntoUI();
+            _isPageInitialized = true;
         }
 
         private void LoadCurrentSettings()
@@ -24,11 +30,45 @@ namespace Lehrstellensuchassistenz.Views
             PathTextBox.Text = fileService.GetStoragePath();
         }
 
+        private void LoadSettingsIntoUI()
+        {
+            var settings = new FileService().LoadSettings();
+            foreach (ComboBoxItem item in ComboLanguage.Items)
+            {
+                if (item.Tag?.ToString() == settings.Language)
+                {
+                    ComboLanguage.SelectedItem = item;
+                    break;
+                }
+            }
+        }
+
+        private void ComboLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isPageInitialized) return;
+
+            if (ComboLanguage.SelectedItem is ComboBoxItem selectedItem)
+            {
+                string cultureCode = selectedItem.Tag.ToString();
+                var service = new FileService();
+                var settings = service.LoadSettings();
+
+                if (settings.Language != cultureCode)
+                {
+                    settings.Language = cultureCode;
+                    service.SaveSettings(settings);
+
+                    // Benutzt HintRestartNote und MsgInfo
+                    MessageBox.Show(Langs.HintRestartNote, Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    RestartApplication();
+                }
+            }
+        }
+
         private void CbAutostart_Changed(object sender, RoutedEventArgs e)
         {
-            // Verhindert Fehler beim ersten Laden
-            if (!IsLoaded) return;
-
+            if (!_isPageInitialized) return;
             var autostartService = new AutostartService();
             autostartService.SetAutostart(CbAutostart.IsChecked ?? false);
         }
@@ -37,25 +77,15 @@ namespace Lehrstellensuchassistenz.Views
         {
             var fileService = new FileService();
             string oldPath = PathTextBox.Text;
-
-            // 1. Dialog öffnen
             string newPath = fileService.ChooseAndSaveNewPath(oldPath);
 
-            // Nur fortfahren, wenn ein Pfad gewählt wurde und dieser anders ist als der alte
             if (string.IsNullOrEmpty(newPath) || newPath.Equals(oldPath, StringComparison.OrdinalIgnoreCase))
-            {
                 return;
-            }
 
-            // UI SOFORT AKTUALISIEREN
             PathTextBox.Text = newPath;
 
-            var moveResult = MessageBox.Show(
-                "Möchtest du deine vorhandenen Daten an den neuen Ort verschieben?\n\n" +
-                "Ja: Daten umziehen & neuen Pfad nutzen.\n" +
-                "Nein: Nur neuen Pfad nutzen (leere Datenbank).\n" +
-                "Abbrechen: Nichts ändern.",
-                "Daten umziehen", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+            // Neuer Key: MsgMigrateQuestion
+            var moveResult = MessageBox.Show(Langs.MsgMigrateQuestion, Langs.MsgConfirmDeleteTitle, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 
             if (moveResult == MessageBoxResult.Cancel)
             {
@@ -66,35 +96,45 @@ namespace Lehrstellensuchassistenz.Views
             try
             {
                 if (moveResult == MessageBoxResult.Yes)
-                {
                     fileService.MigrateData(oldPath, newPath);
-                }
                 else
-                {
                     fileService.SaveStoragePath(newPath);
-                }
 
-                MessageBox.Show("Speicherort aktualisiert. Die App startet nun neu.", "Neustart erforderlich", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Neuer Key: MsgPathUpdatedRestart
+                MessageBox.Show(Langs.MsgPathUpdatedRestart, Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // --- SICHERER NEUSTART ---
-                var processPath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
-                if (processPath != null)
-                {
-                    System.Diagnostics.Process.Start(processPath);
-                    Application.Current.Shutdown();
-                }
-                else
-                {
-                    // Fallback falls MainModule null ist (extrem selten)
-                    MessageBox.Show("Bitte starten Sie die App manuell neu.");
-                    Application.Current.Shutdown();
-                }
+                RestartApplication();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Verschieben der Daten: {ex.Message}", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
-                PathTextBox.Text = oldPath; // Rollback in der UI
+                MessageBox.Show($"{Langs.MsgInfo}: {ex.Message}", Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Error);
+                PathTextBox.Text = oldPath;
             }
+        }
+
+        private void RestartApplication()
+        {
+            try
+            {
+                string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+                if (string.IsNullOrEmpty(exePath)) exePath = Environment.ProcessPath;
+
+                if (!string.IsNullOrEmpty(exePath))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = exePath,
+                        UseShellExecute = true
+                    });
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    // Hier könnte man noch einen Key "ErrExeNotFound" hinzufügen falls nötig
+                    Application.Current.Shutdown();
+                }
+            }
+            catch { Environment.Exit(0); }
         }
 
         private void DeleteAllData_Click(object sender, RoutedEventArgs e)
@@ -104,61 +144,23 @@ namespace Lehrstellensuchassistenz.Views
 
             if (!delUserData && !delApp) return;
 
-            var result = MessageBox.Show(
-                "Bist du sicher? Die ausgewählten Aktionen werden sofort ausgeführt. Die App wird anschließend beendet.",
-                "Cleanup Bestätigung", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            // Neuer Key: MsgCleanupConfirm
+            var result = MessageBox.Show(Langs.MsgCleanupConfirm, Langs.MsgConfirmDeleteTitle, MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
             if (result == MessageBoxResult.Yes)
             {
-                var fileService = new FileService();
-                fileService.FullCleanup(delUserData, delApp, PathTextBox.Text);
-
+                new FileService().FullCleanup(delUserData, delApp, PathTextBox.Text);
                 Application.Current.Shutdown();
             }
         }
 
-        private void PerformCleanup()
-        {
-            // Wir nutzen die neuen Namen aus der XAML
-            bool delUserData = CbDeleteAllUserData.IsChecked ?? false;
-            bool delApp = CbDeleteAppFolder.IsChecked ?? false;
-
-            // Nur ausführen, wenn mindestens eins gewählt ist
-            if (!delUserData && !delApp)
-            {
-                MessageBox.Show("Bitte wähle mindestens eine Option zum Löschen aus.");
-                return;
-            }
-
-            var fileService = new FileService();
-
-            // Aufruf mit den neuen Variablen
-            fileService.FullCleanup(delUserData, delApp, PathTextBox.Text);
-
-            MessageBox.Show("Die gewählten Daten wurden entfernt. Die Anwendung wird beendet.",
-                            "Cleanup erfolgreich");
-
-            Application.Current.Shutdown();
-        }
-
         private void CreateShortcut_Click(object sender, RoutedEventArgs e)
         {
-            try
+            var parentWindow = Window.GetWindow(this);
+            if (parentWindow != null)
             {
-                // Wir brauchen das aktuelle Window für den Service
-                var parentWindow = Window.GetWindow(this);
-                if (parentWindow != null)
-                {
-                    var shortcutService = new ShortcutService(parentWindow);
-                    shortcutService.CreateDesktopShortcut();
-
-                    MessageBox.Show("Verknüpfung wurde erfolgreich auf dem Desktop erstellt.",
-                                    "Erfolg", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Fehler beim Erstellen der Verknüpfung: " + ex.Message);
+                new ShortcutService(parentWindow).CreateDesktopShortcut();
+                MessageBox.Show(Langs.MsgSaved);
             }
         }
 
@@ -170,19 +172,11 @@ namespace Lehrstellensuchassistenz.Views
             if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(url))
             {
                 var newLink = new SidebarLink { Name = name, Url = url };
-
-                // 1. Zugriff auf das MainWindow
                 var mainWindow = (MainWindow)Application.Current.MainWindow;
 
-                // 2. In die Liste im MainWindow werfen -> Sidebar aktualisiert sich SOFORT
                 mainWindow.CustomLinks.Add(newLink);
+                new FileService().SaveCustomLinks(new List<SidebarLink>(mainWindow.CustomLinks));
 
-                // 3. Dauerhaft speichern (über FileService)
-                var fileService = new FileService();
-                var allLinks = new List<SidebarLink>(mainWindow.CustomLinks);
-                fileService.SaveCustomLinks(allLinks);
-
-                // Felder leeren
                 TxtLinkName.Clear();
                 TxtLinkUrl.Clear();
             }

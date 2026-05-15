@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Windows;
 using Lehrstellensuchassistenz.Models;
+using Lehrstellensuchassistenz.Resources.Languages; // Wichtig für Langs
 
-namespace Lehrstellensuchassistenz.Views // Namespace an Ordnerstruktur angepasst
+namespace Lehrstellensuchassistenz.Views
 {
     public partial class AddCompany : Window
     {
@@ -19,7 +20,8 @@ namespace Lehrstellensuchassistenz.Views // Namespace an Ordnerstruktur angepass
             // Validierung: Name darf nicht leer sein
             if (string.IsNullOrWhiteSpace(InputTextBox.Text))
             {
-                MessageBox.Show("Bitte geben Sie einen Namen ein.", "Eingabe fehlt", MessageBoxButton.OK, MessageBoxImage.Warning);
+                // Nutzt Langs für Fehlermeldung und Titel
+                MessageBox.Show(Langs.LblQuestionCompanyName, Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

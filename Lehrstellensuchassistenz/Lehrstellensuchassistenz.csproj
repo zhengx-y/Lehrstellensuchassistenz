@@ -15,6 +15,10 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
+	<ItemGroup>
+	  <Content Remove="Resources\Languages\Langs.en.resx" />
+	  <Content Remove="Resources\Languages\Langs.resx" />
+	</ItemGroup>
 
 	<!-- 2. COM-Referenzen -->
 	<ItemGroup>
@@ -32,6 +36,32 @@
 	<!-- 3. Altlasten entfernen -->
 	<ItemGroup>
 		<None Remove="Views\CompanyElement.xaml.cs~RF91ca43b1.TMP" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="Resources\Languages\Langs.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Langs.resx</DependentUpon>
+	  </Compile>
+	  <Compile Update="Resources\Languages\Resources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Update="Resources\Languages\Langs.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Langs.resx</DependentUpon>
+	  </Content>
+	  <EmbeddedResource Update="Resources\Languages\Langs.en.resx">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </EmbeddedResource>
+	  <EmbeddedResource Update="Resources\Languages\Langs.resx">
+	    <Generator>PublicResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Langs.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 </Project>

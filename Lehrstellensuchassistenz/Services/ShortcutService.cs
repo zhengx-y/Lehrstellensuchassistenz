@@ -19,15 +19,16 @@ namespace Lehrstellensuchassistenz.Services
             _parentWindow = parentWindow;
         }
 
-        // Jetzt PUBLIC, damit WelcomeService darauf zugreifen kann
         public void CreateDesktopShortcut()
         {
             try
             {
                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                string shortcutLocation = Path.Combine(desktopPath, "Lehrstellensuchassistenz.lnk");
-                string exePath = Process.GetCurrentProcess().MainModule!.FileName;
+                // Nutzt den lokalisierten Namen für die .lnk Datei
+                string shortcutName = Lehrstellensuchassistenz.Resources.Languages.Langs.ShortcutDescription;
+                string shortcutLocation = Path.Combine(desktopPath, $"{shortcutName}.lnk");
 
+                string exePath = Process.GetCurrentProcess().MainModule!.FileName;
                 string projectFolder = Path.GetDirectoryName(exePath)!;
                 string iconPath = Path.Combine(projectFolder, "resources", "images", "shortcut_icon.ico");
 
@@ -38,7 +39,7 @@ namespace Lehrstellensuchassistenz.Services
 
                 WshShell shell = new WshShell();
                 IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutLocation);
-                shortcut.Description = "Lehrstellensuchassistenz";
+                shortcut.Description = shortcutName;
                 shortcut.TargetPath = exePath;
                 shortcut.WorkingDirectory = Path.GetDirectoryName(exePath);
                 shortcut.IconLocation = iconPath;
@@ -46,7 +47,8 @@ namespace Lehrstellensuchassistenz.Services
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Fehler beim Erstellen der Verknüpfung: " + ex.Message);
+                // Nutzt die lokalisierte Fehlermeldung
+                MessageBox.Show($"{Lehrstellensuchassistenz.Resources.Languages.Langs.ErrShortcut} {ex.Message}");
             }
         }
 
@@ -57,9 +59,10 @@ namespace Lehrstellensuchassistenz.Services
 
             if (value == null)
             {
+                // MessageBox nutzt jetzt die Ressourcen-Texte
                 var result = MessageBox.Show(
-                    "Soll eine Verknüpfung auf dem Desktop erstellt werden?",
-                    "Verknüpfung erstellen",
+                    Lehrstellensuchassistenz.Resources.Languages.Langs.MsgShortcutQuestion,
+                    Lehrstellensuchassistenz.Resources.Languages.Langs.HeaderShortcut,
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question
                 );

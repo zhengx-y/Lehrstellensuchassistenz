@@ -1,5 +1,6 @@
 ﻿using Lehrstellensuchassistenz.Models;
 using Lehrstellensuchassistenz.Services;
+using Lehrstellensuchassistenz.Resources.Languages;
 using Microsoft.Win32;
 using System;
 using System.IO;
@@ -18,10 +19,9 @@ namespace Lehrstellensuchassistenz.Views
     {
         public Company Company { get; }
         private bool _isUpdating = false;
-
-        // Instanziierung des neuen Services
         private readonly NotizenBoxImageInsertService _imageService = new NotizenBoxImageInsertService();
 
+        // --- 1. INITIALISIERUNG & LADEN ---
         public CompanyElement(Company company)
         {
             InitializeComponent();
@@ -29,46 +29,21 @@ namespace Lehrstellensuchassistenz.Views
             this.DataContext = Company;
 
             this.Loaded += (s, e) => {
-                _isUpdating = true;
+                _isUpdating = true; // Sperre gegen ungewollte Zeitstempel-Updates beim Laden
+
                 LoadNotizen();
                 LoadPhotoPreview();
                 UpdatePlaceholder();
 
-                if (Company != null)
-                {
-                    Company.UpdateTimestamp();
-                }
-
+                // Erst nach dem Rendern freigeben
                 Dispatcher.BeginInvoke(new Action(() => { _isUpdating = false; }),
                     System.Windows.Threading.DispatcherPriority.ContextIdle);
             };
         }
 
-        public void SyncNotizenToModel()
-        {
-            if (NotizenBox == null || Company == null) return;
-            TextRange range = new TextRange(NotizenBox.Document.ContentStart, NotizenBox.Document.ContentEnd);
-
-            bool hasText = !string.IsNullOrWhiteSpace(range.Text) && range.Text != "\r\n";
-            bool hasImages = NotizenBox.Document.Blocks.Any(b => b is Paragraph p && p.Inlines.Any(i => i is InlineUIContainer));
-
-            if (!hasText && !hasImages)
-            {
-                if (Company.NotesXaml != null) Company.NotesXaml = null;
-                return;
-            }
-
-            using (MemoryStream ms = new MemoryStream())
-            {
-                range.Save(ms, DataFormats.Rtf);
-                Company.NotesXaml = Encoding.UTF8.GetString(ms.ToArray());
-            }
-        }
-
         public void LoadNotizen()
         {
             if (NotizenBox == null) return;
-
             _isUpdating = true;
             try
             {
@@ -78,16 +53,55 @@ namespace Lehrstellensuchassistenz.Views
                     byte[] data = Encoding.UTF8.GetBytes(Company.NotesXaml);
                     using (MemoryStream ms = new MemoryStream(data)) { range.Load(ms, DataFormats.Rtf); }
                 }
-                else
-                {
-                    NotizenBox.Document.Blocks.Clear();
-                }
+                else { NotizenBox.Document.Blocks.Clear(); }
             }
             catch { }
             finally
             {
                 _isUpdating = false;
                 UpdatePlaceholder();
+            }
+        }
+
+        private void LoadPhotoPreview()
+        {
+            if (!string.IsNullOrEmpty(Company.PhotoReference) && File.Exists(Company.PhotoReference))
+            {
+                try
+                {
+                    PhotoPreview.Source = new BitmapImage(new Uri(Company.PhotoReference));
+                    PhotoPlaceholderText.Visibility = Visibility.Collapsed;
+                }
+                catch { }
+            }
+        }
+
+        // --- 2. NOTIZEN-LOGIK (SYNC & UI) ---
+        public void SyncNotizenToModel()
+        {
+            if (_isUpdating || NotizenBox == null || Company == null) return;
+
+            TextRange range = new TextRange(NotizenBox.Document.ContentStart, NotizenBox.Document.ContentEnd);
+            bool hasText = !string.IsNullOrWhiteSpace(range.Text) && range.Text != "\r\n";
+            bool hasImages = NotizenBox.Document.Blocks.Any(b => b is Paragraph p && p.Inlines.Any(i => i is InlineUIContainer));
+
+            if (!hasText && !hasImages)
+            {
+                if (Company.NotesXaml != null) Company.NotesXaml = null;
+                return;
+            }
+
+            string newRtf;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                range.Save(ms, DataFormats.Rtf);
+                newRtf = Encoding.UTF8.GetString(ms.ToArray());
+            }
+
+            // DIRTY CHECK: Nur bei echtem Unterschied Zeitstempel triggern
+            if (Company.NotesXaml != newRtf)
+            {
+                Company.NotesXaml = newRtf;
             }
         }
 
@@ -108,26 +122,29 @@ namespace Lehrstellensuchassistenz.Views
 
         private void NotizenBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // 1. Tab-Logik
             if (e.Key == Key.Tab)
             {
                 EditingCommands.TabForward.Execute(null, NotizenBox);
                 e.Handled = true;
                 return;
             }
-
-            // 2. Bild-Einfügen via Service
             if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
-                // Der Service prüft intern auf Clipboard.ContainsImage()
-                if (_imageService.HandleImagePaste(NotizenBox, 500))
-                {
-                    e.Handled = true;
-                }
+                if (_imageService.HandleImagePaste(NotizenBox, 500)) e.Handled = true;
             }
         }
 
-        // ScaleLastInsertedImage wurde entfernt, da die Logik nun im Service liegt.
+        // --- 3. EXTERNE AKTIONEN (BUTTONS & LINKS) ---
+        private void Select_Photo_Click(object sender, MouseButtonEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog { Filter = Langs.FilterImages };
+            if (dialog.ShowDialog() == true)
+            {
+                Company.PhotoReference = dialog.FileName;
+                LoadPhotoPreview();
+                Company.UpdateTimestamp();
+            }
+        }
 
         private void OpenLink_Click(object sender, RoutedEventArgs e)
         {
@@ -155,30 +172,15 @@ namespace Lehrstellensuchassistenz.Views
         private void ContinueButton_Click(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(Company.LastApplicationPath))
-                BrowserService.OpenUrl(Company.LastApplicationPath);
-        }
-
-        private void Select_Photo_Click(object sender, MouseButtonEventArgs e)
-        {
-            OpenFileDialog dialog = new OpenFileDialog { Filter = "Bilder (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg" };
-            if (dialog.ShowDialog() == true)
-            {
-                Company.PhotoReference = dialog.FileName;
-                LoadPhotoPreview();
-                Company.UpdateTimestamp();
-            }
-        }
-
-        private void LoadPhotoPreview()
-        {
-            if (!string.IsNullOrEmpty(Company.PhotoReference) && File.Exists(Company.PhotoReference))
             {
                 try
                 {
-                    PhotoPreview.Source = new BitmapImage(new Uri(Company.PhotoReference));
-                    PhotoPlaceholderText.Visibility = Visibility.Collapsed;
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Company.LastApplicationPath) { UseShellExecute = true });
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"{Langs.MsgErrorOpenOriginal}: {ex.Message}");
+                }
             }
         }
 

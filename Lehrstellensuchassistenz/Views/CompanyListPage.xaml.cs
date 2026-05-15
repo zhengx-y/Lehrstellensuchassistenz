@@ -1,10 +1,8 @@
 ﻿using Lehrstellensuchassistenz.Models;
-using Lehrstellensuchassistenz.Services;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using static Lehrstellensuchassistenz.Services.CompanyService;
 
 namespace Lehrstellensuchassistenz.Views
 {
@@ -19,51 +17,54 @@ namespace Lehrstellensuchassistenz.Views
             InitializeComponent();
             _allCompanies = companies;
 
-            // WICHTIG: Hier die Verbindung herstellen!
+            // Bindung der ListBox an die Datenquelle
             CompanyListBox.ItemsSource = _allCompanies;
-
-            // Initiales Refresh (optional, aber schadet nicht)
-            RefreshList();
         }
 
         /// <summary>
-        /// Aktualisiert die Anzeige basierend auf den Sortier-Kriterien.
+        /// Erzwingt eine visuelle Aktualisierung der Liste.
         /// </summary>
         public void RefreshList()
         {
-            // Das erzwingt das Neuzeichnen der Element-Container
-            CompanyListBox.Items.Refresh();
+            if (CompanyListBox.Items != null)
+            {
+                CompanyListBox.Items.Refresh();
+            }
         }
 
         private void CompanyListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (SelectedCompany != null && Application.Current.MainWindow is MainWindow main)
             {
-                // Zugriff auf den jetzt öffentlichen NavigationService
                 main.NavigationService.NavigateTo(new CompanyElement(SelectedCompany));
             }
         }
 
         private void StatusComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // e.RemovedItems.Count > 0 stellt sicher, dass vorher ein Wert da war 
-            // und nicht gerade die ganze Liste gelöscht wurde.
+            // Triggert nur bei Benutzerinteraktion
             if (e.AddedItems.Count > 0 && e.RemovedItems.Count > 0)
             {
                 if (Application.Current.MainWindow is MainWindow main)
                 {
                     main.SaveAllData();
                     main.ApplySorting();
+
+                    // Wichtig: Auch hier prüfen, ob die Leiste ein/ausgeblendet werden muss
+                    main.RefreshMultiSelectVisibility();
                 }
             }
         }
 
+        /// <summary>
+        /// DIESER NAME MUSS MIT DEM XAML (Click="SelectionCheckBox_Click") ÜBEREINSTIMMEN
+        /// </summary>
         private void SelectionCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            // Greift auf das MainWindow zu und triggert den Check
             if (Application.Current.MainWindow is MainWindow mw)
             {
-                mw.UpdateSelectionVisibility();
+                // Aktualisiert sofort die Sichtbarkeit der Mass-Select-Leiste im MainWindow
+                mw.RefreshMultiSelectVisibility();
             }
         }
     }

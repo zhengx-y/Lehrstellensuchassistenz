@@ -4,59 +4,55 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lehrstellensuchassistenz"
+        xmlns:lang="clr-namespace:Lehrstellensuchassistenz.Resources.Languages"
+        xmlns:conv="clr-namespace:Lehrstellensuchassistenz.Converters" 
         mc:Ignorable="d"
-        Title="Lehrstellensuchassistenz v2.1.2"
+        Title="Lehrstellensuchassistenz v3.0.0"
         Height="720" Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown"
         WindowState="Maximized">
 
     <Window.Resources>
+        <conv:EnumToLocalizedNameConverter x:Key="EnumToLocalizedNameConverter" />
         <ScaleTransform x:Key="TopScale" ScaleX="1" ScaleY="1"/>
         <ScaleTransform x:Key="SideScale" ScaleX="1" ScaleY="1"/>
     </Window.Resources>
 
-    <Grid Background="{StaticResource BackgroundBrush}"
-          PreviewMouseWheel="Window_PreviewMouseWheel">
-
+    <Grid Background="{StaticResource BackgroundBrush}" PreviewMouseWheel="Window_PreviewMouseWheel">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="5"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid x:Name="TopBarGrid" RenderTransform="{StaticResource TopScale}" RenderTransformOrigin="0,0"
-              Grid.Row="0" Margin="10">
+        <Grid x:Name="TopBarGrid" Grid.Row="0" Margin="10" RenderTransform="{StaticResource TopScale}" RenderTransformOrigin="0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
-                <Button Content="Zurück" Width="75" Height="40" Margin="0,0,10,0" Click="NavigateBack_Click"/>
-                <Button Content="Änderungen speichern" Width="160" Height="40" Margin="0,0,10,0" Click="SaveAllData_Click"/>
+                <Button Content="{x:Static lang:Langs.BtnBack}" Width="75" Height="40" Margin="0,0,10,0" Click="NavigateBack_Click"/>
+                <Button Content="{x:Static lang:Langs.BtnSaveAll}" Width="160" Height="40" Margin="0,0,10,0" Click="SaveAllData_Click"/>
 
-                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
+                <Rectangle Width="1" Height="25" Fill="Gray" Margin="10,0,15,0" VerticalAlignment="Center"/>
 
-                <Button Content="Markierte löschen" 
-            Width="130" Height="40" 
-            Margin="0,0,10,0" 
-            Click="BulkDelete_Click" 
-            Background="#E57373"/>
+                <Button x:Name="BtnBulkDelete" 
+                        Content="{x:Static lang:Langs.BtnBulkDelete}" 
+                        Width="135" Height="40" Margin="0,0,10,0" 
+                        Click="BulkDelete_Click" Background="#E57373" Foreground="White" FontWeight="Bold"/>
 
-                <StackPanel x:Name="SelectionActionGroup" Orientation="Horizontal" Visibility="Collapsed">
-                    <Button Content="Auswahl aufheben" 
-                Width="120" Height="40" 
-                Margin="0,0,10,0" 
-                Click="ClearSelection_Click"
-                Background="#CFD8DC"/>
+                <StackPanel x:Name="MultiSelectBar" Orientation="Horizontal" Visibility="Collapsed">
+                    <Button Content="{x:Static lang:Langs.BtnClearSelection}" 
+                            Width="130" Height="40" Margin="0,0,10,0" 
+                            Click="ClearSelection_Click" Background="#CFD8DC"/>
 
                     <ComboBox x:Name="BulkStatusCombo" Width="150" Height="40" 
-                  SelectionChanged="BulkStatus_Changed"
-                  ItemsSource="{Binding Source={StaticResource StatusEnumValues}}"
-                  VerticalContentAlignment="Center">
+                              SelectionChanged="BulkStatus_Changed"
+                              VerticalContentAlignment="Center">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource EnumDescConverter}}"/>
+                                <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedNameConverter}}"/>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
@@ -65,36 +61,23 @@
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,15,0">
-                    <CheckBox x:Name="CheckRejectedBottom" 
-                              Content="Abgelehnt nach unten" 
-                              FontSize="12" Foreground="Black"
-                              Click="SortTrigger_Click"/>
-                    <CheckBox x:Name="CheckNoResponseBottom" 
-                              Content="Keine Antwort nach unten" 
-                              FontSize="12" Foreground="Black"
-                              Click="SortTrigger_Click"/>
-                    <CheckBox x:Name="CheckUnappliedTop" 
-                              Content="Unbeworben nach oben" 
-                              FontSize="12" Foreground="Black"
-                              Click="SortTrigger_Click"/>
+                    <CheckBox x:Name="CheckRejectedBottom" Content="{x:Static lang:Langs.SortCheckRejectedBottom}" FontSize="11" Click="SortTrigger_Click"/>
+                    <CheckBox x:Name="CheckNoResponseBottom" Content="{x:Static lang:Langs.SortCheckNoResponseBottom}" FontSize="11" Click="SortTrigger_Click"/>
+                    <CheckBox x:Name="CheckUnappliedTop" Content="{x:Static lang:Langs.SortCheckUnappliedTop}" FontSize="11" Click="SortTrigger_Click"/>
                 </StackPanel>
 
-                <ComboBox x:Name="SortComboBox"
-                          Width="180" Height="40" Margin="0,0,10,0" 
-                          SelectionChanged="SortComboBox_SelectionChanged"
-                          VerticalContentAlignment="Center"
-                          SelectedIndex="1">
-                    <ComboBoxItem Content="Datum: Älteste zuerst" Tag="DateAsc"/>
-                    <ComboBoxItem Content="Datum: Neueste zuerst" Tag="DateDesc"/>
-                    <ComboBoxItem Content="Name: A → Z" Tag="NameAsc"/>
-                    <ComboBoxItem Content="Name: Z → A" Tag="NameDesc"/>
-                    <ComboBoxItem Content="Bearbeitet: Neu zuerst" Tag="EditDesc"/>
-                    <ComboBoxItem Content="Bearbeitet: Alt zuerst" Tag="EditAsc"/>
+                <ComboBox x:Name="SortComboBox" Width="180" Height="40" Margin="0,0,10,0" 
+          SelectionChanged="SortComboBox_SelectionChanged" SelectedIndex="1" VerticalContentAlignment="Center">
+                    <ComboBoxItem Content="{x:Static lang:Langs.SortDateAsc}" Tag="DateAsc"/>
+                    <ComboBoxItem Content="{x:Static lang:Langs.SortDateDesc}" Tag="DateDesc"/>
+                    <ComboBoxItem Content="{x:Static lang:Langs.SortNameAsc}" Tag="NameAsc"/>
+                    <ComboBoxItem Content="{x:Static lang:Langs.SortNameDesc}" Tag="NameDesc"/>
+                    <ComboBoxItem Content="{x:Static lang:Langs.SortEditDesc}" Tag="EditDesc"/>
+                    <ComboBoxItem Content="{x:Static lang:Langs.SortEditAsc}" Tag="EditAsc"/>
                 </ComboBox>
 
-                <Button Content="+ Firma hinzufügen" Width="160" Height="40" 
-                        Click="AddCompany_Click" 
-                        Background="{StaticResource PrimaryBrush}" 
+                <Button Content="{x:Static lang:Langs.BtnAddCompany}" Width="160" Height="40" 
+                        Click="AddCompany_Click" Background="{StaticResource PrimaryBrush}" 
                         Foreground="White" FontWeight="Bold"/>
             </StackPanel>
         </Grid>
@@ -108,47 +91,40 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <ScrollViewer x:Name="SidebarScrollViewer" RenderTransform="{StaticResource SideScale}" RenderTransformOrigin="0,0"
-                          Grid.Column="0"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <StackPanel x:Name="SidebarGrid" HorizontalAlignment="Stretch" VerticalAlignment="Top">
-                    <Button Content="📄 Lebenslauf öffnen" Width="180" Height="40" Margin="10,15,10,5" Background="#81C784" Click="Resume_Click"/>
-                    <Button Content="📂 Bewerbungsordner" Width="180" Height="40" Margin="10,5" Background="#64B5F6" Click="OpenApplicationsFolder_Click"/>
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" RenderTransform="{StaticResource SideScale}">
+                <StackPanel x:Name="SidebarGrid" Width="200">
+                    <Button Content="{x:Static lang:Langs.BtnOpenResume}" Margin="10,15,10,5" Height="40" Background="#81C784" Click="Resume_Click"/>
+                    <Button Content="{x:Static lang:Langs.BtnOpenAppFolder}" Margin="10,5" Height="40" Background="#64B5F6" Click="OpenApplicationsFolder_Click"/>
 
                     <Separator Margin="15,10" Background="Gray"/>
-                    <TextBlock Text="MEINE LINKS" Foreground="Gray" Margin="15,0,0,5" FontSize="12" FontWeight="Bold"/>
+                    <TextBlock Text="{x:Static lang:Langs.HeaderMyLinks}" Foreground="Gray" Margin="15,0,0,5" FontSize="12" FontWeight="Bold"/>
 
                     <ItemsControl ItemsSource="{Binding CustomLinks, RelativeSource={RelativeSource AncestorType=Window}}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Content="{Binding Name}" 
-                    Tag="{Binding Url}" 
-                    Width="180" Height="35" Margin="10,2" 
-                    Click="Quicklink_Click"/>
+                                <Button Content="{Binding Name}" Tag="{Binding Url}" Margin="10,2" Height="35" Click="Quicklink_Click"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
                     <Separator Margin="15,10" Background="Gray"/>
-                    <TextBlock Text="PORTALE" Foreground="Gray" Margin="15,0,0,5" FontSize="12" FontWeight="Bold"/>
+                    <TextBlock Text="{x:Static lang:Langs.HeaderPortals}" Foreground="Gray" Margin="15,0,0,5" FontSize="12" FontWeight="Bold"/>
 
-                    <Button Content="AMS Alle Jobs" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://jobs.ams.at/public/emps/"/>
-                    <Button Content="karriere.at" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.karriere.at"/>
-                    <Button Content="WKO Lehrstellen" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://lehrbetriebsuebersicht.wko.at/SearchLehrbetrieb.aspx"/>
-                    <Button Content="DevJobs" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://devjobs.at"/>
-                    <Button Content="lehrstelle.at" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.lehrstelle.at"/>
-                    <Button Content="Lehrstellenportal" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.lehrstellenportal.at"/>
-                    <Button Content="Metajob" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.metajob.at"/>
-                    <Button Content="Willhaben Jobs" Width="180" Height="35" Margin="10,2" Click="Quicklink_Click" Tag="https://www.willhaben.at/jobs/"/>
-
+                    <Button Content="AMS Alle Jobs" Margin="10,2" Height="35" Click="Quicklink_Click" Tag="https://jobs.ams.at/public/emps/"/>
+                    <Button Content="karriere.at" Margin="10,2" Height="35" Click="Quicklink_Click" Tag="https://www.karriere.at"/>
+                    <Button Content="WKO Lehrstellen" Margin="10,2" Height="35" Click="Quicklink_Click" Tag="https://lehrbetriebsuebersicht.wko.at/SearchLehrbetrieb.aspx"/>
+                    <Button Content="DevJobs" Margin="10,2" Height="35" Click="Quicklink_Click" Tag="https://devjobs.at"/>
+                    <Button Content="lehrstelle.at" Margin="10,2" Height="35" Click="Quicklink_Click" Tag="https://www.lehrstelle.at"/>
+                    <Button Content="Lehrstellenportal" Margin="10,2" Height="35" Click="Quicklink_Click" Tag="https://www.lehrstellenportal.at"/>
+                    <Button Content="Metajob" Margin="10,2" Height="35" Click="Quicklink_Click" Tag="https://www.metajob.at"/>
+                    <Button Content="Willhaben Jobs" Margin="10,2" Height="35" Click="Quicklink_Click" Tag="https://www.willhaben.at/jobs/"/>
 
                     <Separator Margin="15,10" Background="Gray"/>
-                    <Button Content="⚙ Einstellungen" Width="180" Height="40" Margin="10,5,10,10" Background="#9E9E9E" Click="Settings_Click"/>
+                    <Button Content="{x:Static lang:Langs.BtnSettings}" Margin="10,5,10,10" Height="40" Background="#9E9E9E" Click="Settings_Click"/>
                 </StackPanel>
             </ScrollViewer>
 
-            <Border Grid.Column="1" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Stretch"/>
+            <Border Grid.Column="1" Background="{StaticResource PrimaryBrush}"/>
 
             <Frame x:Name="MainFrame" Grid.Column="2" Margin="10" NavigationUIVisibility="Hidden"/>
         </Grid>

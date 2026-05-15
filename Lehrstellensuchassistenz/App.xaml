@@ -15,7 +15,7 @@
             <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
-            <converters:EnumDescriptionConverter x:Key="EnumDescConverter"/>
+            <converters:EnumToLocalizedNameConverter x:Key="EnumToLocalizedNameConverter"/>
 
             <ObjectDataProvider x:Key="StatusEnumValues" 
                                 MethodName="GetValues" 

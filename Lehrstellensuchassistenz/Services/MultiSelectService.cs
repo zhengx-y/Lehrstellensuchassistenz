@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using Lehrstellensuchassistenz.Models;
+using Lehrstellensuchassistenz.Resources.Languages; // Wichtig für Langs
 
 namespace Lehrstellensuchassistenz.Services
 {
@@ -15,27 +16,23 @@ namespace Lehrstellensuchassistenz.Services
             _companies = companies;
         }
 
-        /// <summary>
-        /// Gibt alle aktuell markierten Unternehmen zurück.
-        /// Benutzt jetzt "IsSelectedForAction" passend zum Model.
-        /// </summary>
         public List<Company> GetSelectedCompanies()
         {
-            // Hier war der Fehler: IsSelected -> IsSelectedForAction
             return _companies.Where(c => c.IsSelectedForAction).ToList();
         }
 
         /// <summary>
-        /// Löscht alle markierten Unternehmen nach Bestätigung.
+        /// Löscht alle markierten Unternehmen mit lokalisierten Texten.
         /// </summary>
         public bool DeleteSelected()
         {
             var selected = GetSelectedCompanies();
             if (!selected.Any()) return false;
 
+            // Nutzt jetzt MsgConfirmDeleteBulk und MsgConfirmDeleteTitle aus Langs
             var result = MessageBox.Show(
-                $"{selected.Count} Unternehmen wirklich löschen?",
-                "Massenlöschung",
+                $"{selected.Count} {Langs.MsgConfirmDeleteBulk}",
+                Langs.MsgConfirmDeleteTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 
@@ -50,22 +47,16 @@ namespace Lehrstellensuchassistenz.Services
             return false;
         }
 
-        /// <summary>
-        /// Ändert den Status für alle markierten Unternehmen.
-        /// </summary>
         public void ChangeStatusForSelected(ApplicationStatus newStatus)
         {
             var selected = GetSelectedCompanies();
             foreach (var company in selected)
             {
                 company.Status = newStatus;
-                company.IsSelectedForAction = false; // Auswahl nach Aktion aufheben
+                company.IsSelectedForAction = false;
             }
         }
 
-        /// <summary>
-        /// Setzt alle Checkboxen zurück (Deselect All).
-        /// </summary>
         public void ClearSelection()
         {
             foreach (var company in _companies)

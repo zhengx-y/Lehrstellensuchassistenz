@@ -4,11 +4,20 @@ namespace Lehrstellensuchassistenz.Models
 {
     public enum ApplicationStatus
     {
-        [Description("Noch nicht beworben")] Unbeworben,
-        [Description("Beworben")] Beworben,
-        [Description("Keine Antwort")] KeineAntwort,
-        [Description("Eingeladen")] Eingeladen,
-        [Description("Abgelehnt")] Abgelehnt,
-        [Description("Zusage")] Zusage
+        Unbeworben,
+        Beworben,
+        KeineAntwort,
+        Eingeladen,
+        Abgelehnt,
+        Zusage
+    }
+
+    public static class ApplicationStatusExtensions
+    {
+        public static string ToDisplayName(this ApplicationStatus status)
+        {
+            // Holt den Text direkt aus der Langs.resx (und damit automatisch die richtige Sprache)
+            return Lehrstellensuchassistenz.Resources.Languages.Langs.ResourceManager.GetString("Status" + status.ToString()) ?? status.ToString();
+        }
     }
 }
