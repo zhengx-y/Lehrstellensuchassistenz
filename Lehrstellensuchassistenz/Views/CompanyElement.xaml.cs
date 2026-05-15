@@ -1,5 +1,6 @@
 ﻿using Lehrstellensuchassistenz.Models;
 using Lehrstellensuchassistenz.Services;
+using Lehrstellensuchassistenz.Resources.Languages; // Hinzugefügt für Properties.Resources
 using Microsoft.Win32;
 using System;
 using System.IO;
@@ -119,15 +120,12 @@ namespace Lehrstellensuchassistenz.Views
             // 2. Bild-Einfügen via Service
             if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
-                // Der Service prüft intern auf Clipboard.ContainsImage()
                 if (_imageService.HandleImagePaste(NotizenBox, 500))
                 {
                     e.Handled = true;
                 }
             }
         }
-
-        // ScaleLastInsertedImage wurde entfernt, da die Logik nun im Service liegt.
 
         private void OpenLink_Click(object sender, RoutedEventArgs e)
         {
@@ -139,6 +137,8 @@ namespace Lehrstellensuchassistenz.Views
         {
             if (sender is Button btn && btn.Tag != null)
             {
+                // Wichtig: Der Tag im XAML bleibt technisch ("Bewerbungstipps"), 
+                // damit die Logik sprachenunabhängig funktioniert.
                 var type = btn.Tag.ToString() == "Bewerbungstipps" ? TippsType.Bewerbungstipps : TippsType.Lebenslauftipps;
                 BrowserService.OpenTipps(type);
             }
@@ -160,7 +160,8 @@ namespace Lehrstellensuchassistenz.Views
 
         private void Select_Photo_Click(object sender, MouseButtonEventArgs e)
         {
-            OpenFileDialog dialog = new OpenFileDialog { Filter = "Bilder (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg" };
+            // Nutzt den Filter aus der Ressourcendatei
+            OpenFileDialog dialog = new OpenFileDialog { Filter = Lehrstellensuchassistenz.Resources.Languages.Langs.FilterImages };
             if (dialog.ShowDialog() == true)
             {
                 Company.PhotoReference = dialog.FileName;

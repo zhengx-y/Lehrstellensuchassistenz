@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Windows;
 using Microsoft.Win32;
 using Lehrstellensuchassistenz.Models;
+using Lehrstellensuchassistenz.Resources.Languages;
 
 namespace Lehrstellensuchassistenz.Services
 {
@@ -15,10 +16,11 @@ namespace Lehrstellensuchassistenz.Services
         private string _basePath;
         private string _filePath;
         private string _userFilesPath;
-        private string _bewerbungenPath;
-        private readonly string _resumeName = "Lebenslauf.pdf";
+        private string _applicationsPath;
+        private readonly string _resumeName = "CV.pdf";
         private const string RegistryPath = @"Software\Lehrstellensuchassistenz";
         private const string PathValueName = "UserDataPath";
+        private string _settingsPath;
 
         private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
@@ -31,13 +33,14 @@ namespace Lehrstellensuchassistenz.Services
             _basePath = GetStoragePath();
             _filePath = Path.Combine(_basePath, "companies.json");
             _userFilesPath = Path.Combine(_basePath, "user-files");
-            _bewerbungenPath = Path.Combine(_basePath, "bewerbungen");
+            _applicationsPath = Path.Combine(_basePath, "applications");
+            _settingsPath = Path.Combine(_basePath, "settings.json");
 
             try
             {
                 if (!Directory.Exists(_basePath)) Directory.CreateDirectory(_basePath);
                 if (!Directory.Exists(_userFilesPath)) Directory.CreateDirectory(_userFilesPath);
-                if (!Directory.Exists(_bewerbungenPath)) Directory.CreateDirectory(_bewerbungenPath);
+                if (!Directory.Exists(_applicationsPath)) Directory.CreateDirectory(_applicationsPath);
             }
             catch (Exception ex)
             {
@@ -70,7 +73,8 @@ namespace Lehrstellensuchassistenz.Services
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Speichern: {ex.Message}");
+                // Nutzt Langs für die Fehlermeldung
+                MessageBox.Show($"{Langs.MsgInfo}: {ex.Message}");
             }
         }
 
@@ -80,8 +84,7 @@ namespace Lehrstellensuchassistenz.Services
             string exePath = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
             string batchFile = Path.Combine(Path.GetTempPath(), "cleanup_assistenz.bat");
 
-            // 1. AUTOSTART IMMER ENTFERNEN (wenn gelöscht wird)
-            // Wenn die App oder die Daten gehen, hat der Autostart keinen Sinn mehr.
+            // 1. AUTOSTART ENTFERNEN
             try
             {
                 using (var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true))
@@ -89,9 +92,9 @@ namespace Lehrstellensuchassistenz.Services
                     key?.DeleteValue("Lehrstellensuchassistenz", false);
                 }
             }
-            catch { /* Falls der Eintrag nie existierte, ignorieren wir den Fehler */ }
+            catch { }
 
-            // 2. REGISTRY-EINSTELLUNGEN DER APP LÖSCHEN
+            // 2. REGISTRY-EINSTELLUNGEN LÖSCHEN
             if (deleteAllUserData)
             {
                 try
@@ -104,9 +107,9 @@ namespace Lehrstellensuchassistenz.Services
                 catch { }
             }
 
-            // 3. BATCH-SKRIPT FÜR DATEILÖSCHUNG VORBEREITEN
+            // 3. BATCH-SKRIPT VORBEREITEN
             string commands = "@echo off\n" +
-                              "timeout /t 2 > nul\n" + // Warte 2 Sek, damit die App Zeit zum Schließen hat
+                              "timeout /t 2 > nul\n" +
                               "cd /d %temp%\n";
 
             if (deleteAllUserData)
@@ -137,7 +140,7 @@ namespace Lehrstellensuchassistenz.Services
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Fehler beim Cleanup-Skript: " + ex.Message);
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -163,12 +166,12 @@ namespace Lehrstellensuchassistenz.Services
         {
             var dialog = new OpenFileDialog
             {
-                Title = "Wähle den neuen Speicherort",
+                Title = Langs.BtnChooseFolder,
                 InitialDirectory = currentPath,
                 ValidateNames = false,
                 CheckFileExists = false,
                 CheckPathExists = true,
-                FileName = "Ordner auswählen"
+                FileName = Langs.BtnChooseFolder // "Ordner auswählen" Ersatz
             };
 
             return (dialog.ShowDialog() == true) ? Path.GetDirectoryName(dialog.FileName) : currentPath;
@@ -206,22 +209,25 @@ namespace Lehrstellensuchassistenz.Services
             if (File.Exists(pdfInUserFiles)) { OpenFile(pdfInUserFiles); }
             else
             {
-                var dialog = new OpenFileDialog { Title = "Wähle deinen Lebenslauf", Filter = "PDF (*.pdf)|*.pdf" };
+                // Nutzt Langs für Titel und Filter
+                var dialog = new OpenFileDialog { Title = Langs.BtnOpenResume, Filter = "PDF (*.pdf)|*.pdf" };
                 if (dialog.ShowDialog() == true)
                 {
-                    try { 
+                    try
+                    {
                         File.Copy(dialog.FileName, pdfInUserFiles, true);
-                        File.Copy(pdfInUserFiles, Path.Combine(_bewerbungenPath, _resumeName), true);
+                        File.Copy(pdfInUserFiles, Path.Combine(_applicationsPath, _resumeName), true);
                         OpenFile(pdfInUserFiles);
-                    } catch (Exception ex) { MessageBox.Show(ex.Message); }
+                    }
+                    catch (Exception ex) { MessageBox.Show(ex.Message); }
                 }
             }
         }
 
         public void OpenBewerbungenFolder()
         {
-            if (Directory.Exists(_bewerbungenPath))
-                Process.Start(new ProcessStartInfo(_bewerbungenPath) { UseShellExecute = true });
+            if (Directory.Exists(_applicationsPath))
+                Process.Start(new ProcessStartInfo(_applicationsPath) { UseShellExecute = true });
         }
 
         private void OpenFile(string path)
@@ -229,18 +235,51 @@ namespace Lehrstellensuchassistenz.Services
             try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
-        public void SaveCustomLinks(System.Collections.Generic.List<SidebarLink> links)
+
+        public void SaveCustomLinks(List<SidebarLink> links)
         {
             string path = Path.Combine(GetStoragePath(), "custom_links.json");
-            string json = System.Text.Json.JsonSerializer.Serialize(links);
+            string json = JsonSerializer.Serialize(links, _jsonOptions);
             File.WriteAllText(path, json);
         }
 
-        public System.Collections.Generic.List<SidebarLink> LoadCustomLinks()
+        public List<SidebarLink> LoadCustomLinks()
         {
             string path = Path.Combine(GetStoragePath(), "custom_links.json");
-            if (!File.Exists(path)) return new System.Collections.Generic.List<SidebarLink>();
-            return System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.List<SidebarLink>>(File.ReadAllText(path));
+            if (!File.Exists(path)) return new List<SidebarLink>();
+            try
+            {
+                string json = File.ReadAllText(path);
+                return JsonSerializer.Deserialize<List<SidebarLink>>(json, _jsonOptions) ?? new List<SidebarLink>();
+            }
+            catch { return new List<SidebarLink>(); }
+        }
+
+        public AppSettings LoadSettings()
+        {
+            try
+            {
+                if (!File.Exists(_settingsPath)) return new AppSettings();
+                string json = File.ReadAllText(_settingsPath);
+                return JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions) ?? new AppSettings();
+            }
+            catch
+            {
+                return new AppSettings();
+            }
+        }
+
+        public void SaveSettings(AppSettings settings)
+        {
+            try
+            {
+                string json = JsonSerializer.Serialize(settings, _jsonOptions);
+                File.WriteAllText(_settingsPath, json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Fehler beim Speichern der Settings: " + ex.Message);
+            }
         }
     }
 }

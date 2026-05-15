@@ -6,15 +6,16 @@
       xmlns:local="clr-namespace:Lehrstellensuchassistenz.Views"
       xmlns:converters="clr-namespace:Lehrstellensuchassistenz.Converters"
       xmlns:localModels="clr-namespace:Lehrstellensuchassistenz.Models"
+      xmlns:lang="clr-namespace:Lehrstellensuchassistenz.Resources.Languages"
       xmlns:System="clr-namespace:System;assembly=mscorlib"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="Deine Bewerbungen">
+      Title="{x:Static lang:Langs.TitleCompanyList}">
 
     <Page.Resources>
         <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-        <converters:EnumDescriptionConverter x:Key="EnumDescConverter"/>
+        <converters:EnumToLocalizedNameConverter x:Key="EnumToLocalizedNameConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
 
         <ObjectDataProvider x:Key="StatusEnumValues" 
@@ -39,14 +40,14 @@
                 <DataTemplate>
                     <Grid Margin="0,0,0,-5">
                         <Border Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}" 
-        CornerRadius="10" Margin="10">
-    <Border.CacheMode>
-        <BitmapCache EnableClearType="True" RenderAtScale="1"/>
-    </Border.CacheMode>
-    <Border.Effect>
-        <DropShadowEffect BlurRadius="15" Opacity="0.4"/>
-    </Border.Effect>
-</Border>
+                                CornerRadius="10" Margin="10">
+                            <Border.CacheMode>
+                                <BitmapCache EnableClearType="True" RenderAtScale="1"/>
+                            </Border.CacheMode>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" Opacity="0.4"/>
+                            </Border.Effect>
+                        </Border>
 
                         <Border Background="Transparent" Padding="20" Margin="10">
                             <Grid>
@@ -60,7 +61,7 @@
                                 <TextBlock Text="{Binding Name}" FontSize="22" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
 
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="25,0,15,0" Opacity="0.8">
-                                    <TextBlock Text="Zuletzt aktualisiert:" FontSize="10" Foreground="White" HorizontalAlignment="Right"/>
+                                    <TextBlock Text="{x:Static lang:Langs.LblLastUpdated}" FontSize="10" Foreground="White" HorizontalAlignment="Right"/>
                                     <TextBlock Text="{Binding LastModified, StringFormat={}{0:dd.MM.yyyy}}" FontSize="13" Foreground="White" HorizontalAlignment="Right"/>
                                 </StackPanel>
 
@@ -72,19 +73,20 @@
                                           SelectionChanged="StatusComboBox_SelectionChanged">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Converter={StaticResource EnumDescConverter}}"/>
+                                            <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedNameConverter}}"/>
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
 
                                 <Border Grid.Column="3" 
-        Background="Transparent" 
-        Padding="15,0" 
-        VerticalAlignment="Stretch"
-        Cursor="Hand">
+                                        Background="Transparent" 
+                                        Padding="15,0" 
+                                        VerticalAlignment="Stretch"
+                                        Cursor="Hand">
                                     <CheckBox VerticalAlignment="Center" 
-              HorizontalAlignment="Center"
-              IsChecked="{Binding IsSelectedForAction, Mode=TwoWay}">
+                                              HorizontalAlignment="Center"
+                                              IsChecked="{Binding IsSelectedForAction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              Click="SelectionCheckBox_Click">
                                         <CheckBox.LayoutTransform>
                                             <ScaleTransform ScaleX="3.0" ScaleY="3.0"/>
                                         </CheckBox.LayoutTransform>
@@ -110,7 +112,7 @@
                                     <Border.RenderTransform>
                                         <ScaleTransform ScaleX="1" ScaleY="1"/>
                                     </Border.RenderTransform>
-                                    <ContentPresenter x:Name="Content" />
+                                    <ContentPresenter />
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
@@ -119,7 +121,7 @@
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="SelectionBorder" Property="RenderTransform">
                                             <Setter.Value>
-                                                <ScaleTransform ScaleX="0.99" ScaleY="0.99"/>
+                                                <ScaleTransform ScaleX="0.996" ScaleY="0.996"/>
                                             </Setter.Value>
                                         </Setter>
                                     </Trigger>

@@ -1,8 +1,10 @@
 ﻿using Lehrstellensuchassistenz.Models;
+using Lehrstellensuchassistenz.Resources.Languages;
 using Lehrstellensuchassistenz.Services;
 using Lehrstellensuchassistenz.Views;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,39 +13,48 @@ namespace Lehrstellensuchassistenz
 {
     public partial class MainWindow : Window
     {
-        // Wichtig: Wir nutzen Companies (Großgeschrieben) als öffentlichen Zugriffspunkt
+        // Datenquellen
         public ObservableCollection<Company> Companies { get; } = new ObservableCollection<Company>();
         public ObservableCollection<SidebarLink> CustomLinks { get; } = new ObservableCollection<SidebarLink>();
 
+        // Services
         private readonly FileService _fileService = new FileService();
         public readonly CompanyService CompanyService;
         public readonly NavigationService NavigationService;
         private readonly UIService _uiService = new UIService();
         private readonly MultiSelectService _multiSelectService;
+
         private bool _isSorting = false;
 
         public MainWindow()
         {
             InitializeComponent();
 
+            // Services initialisieren
             CompanyService = new CompanyService(Companies);
             NavigationService = new NavigationService(MainFrame);
             _multiSelectService = new MultiSelectService(Companies);
 
+            // Daten laden
             LoadAllData();
             LoadCustomLinks();
 
+            // Startseite anzeigen
             NavigationService.NavigateTo(new CompanyListPage(Companies));
 
             this.Loaded += MainWindow_Loaded;
-            MainFrame.Navigated += MainFrame_Navigated;
-            this.AddHandler(CheckBox.ClickEvent, new RoutedEventHandler(OnAnyCheckBoxClicked));
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             var welcomeService = new WelcomeService(this);
             welcomeService.CheckFirstStart();
+
+            // ComboBox für Massen-Statusänderung befüllen
+            BulkStatusCombo.ItemsSource = Enum.GetValues(typeof(ApplicationStatus));
+
+            // Initialer Check der UI-Sichtbarkeit
+            RefreshMultiSelectVisibility();
         }
 
         #region Speichern & Laden
@@ -64,25 +75,110 @@ namespace Lehrstellensuchassistenz
 
         public void SaveAllData()
         {
-            // Hier prüfen wir, ob wir in der Detailansicht sind und synchronisieren
             if (MainFrame.Content is CompanyElement detailPage)
             {
-                // Falls diese Methode in CompanyElement fehlt, siehe Schritt 2!
                 detailPage.SyncNotizenToModel();
             }
-
             _fileService.Save(Companies);
         }
 
         private void SaveAllData_Click(object sender, RoutedEventArgs e)
         {
             SaveAllData();
-            MessageBox.Show("Gespeichert!", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Langs.MsgSaved, Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Information);
             ApplySorting();
         }
         #endregion
 
-        #region UI & Navigation
+        #region Multi-Select Logik (Massenauswahl)
+
+        /// <summary>
+        /// Steuert die Sichtbarkeit der Massenbearbeitungs-Leiste basierend auf der Auswahl.
+        /// </summary>
+        public void RefreshMultiSelectVisibility()
+        {
+            // Prüfen, ob irgendeine Firma markiert ist
+            bool anySelected = Companies != null && Companies.Any(c => c.IsSelectedForAction);
+
+            // Steuert die im XAML definierte MultiSelectBar
+            if (MultiSelectBar != null)
+            {
+                MultiSelectBar.Visibility = anySelected ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void ClearSelection_Click(object sender, RoutedEventArgs e)
+        {
+            // Alle Häkchen über den Service entfernen
+            _multiSelectService.ClearSelection();
+
+            // Leiste sofort ausblenden
+            RefreshMultiSelectVisibility();
+
+            // UI in der Liste aktualisieren
+            if (MainFrame.Content is CompanyListPage listPage)
+                listPage.RefreshList();
+        }
+
+        private void BulkDelete_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = _multiSelectService.GetSelectedCompanies();
+
+            if (selected.Any())
+            {
+                // Massenlöschung
+                if (_multiSelectService.DeleteSelected())
+                {
+                    RefreshMultiSelectVisibility();
+                    FinishBulkChange();
+                }
+            }
+            else
+            {
+                // Einzellöschung (Fallback falls nichts selektiert ist, aber Button aktiv war)
+                Company? toDelete = (MainFrame.Content is CompanyListPage lp) ? lp.SelectedCompany :
+                                   (MainFrame.Content is CompanyElement dp ? dp.Company : null);
+
+                if (toDelete != null && CompanyService.ConfirmAndDelete(toDelete))
+                {
+                    if (MainFrame.Content is CompanyElement)
+                        NavigationService.NavigateTo(new CompanyListPage(Companies));
+
+                    FinishBulkChange();
+                }
+            }
+        }
+
+        private void BulkStatus_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (BulkStatusCombo.SelectedIndex == -1) return;
+
+            if (BulkStatusCombo.SelectedItem is ApplicationStatus status)
+            {
+                // Status für alle markierten ändern
+                _multiSelectService.ChangeStatusForSelected(status);
+                BulkStatusCombo.SelectedIndex = -1;
+
+                // UI aufräumen: Häkchen weg und Leiste ausblenden
+                _multiSelectService.ClearSelection();
+                RefreshMultiSelectVisibility();
+
+                if (MainFrame.Content is CompanyListPage listPage)
+                    listPage.RefreshList();
+
+                FinishBulkChange();
+            }
+        }
+
+        private void FinishBulkChange()
+        {
+            SaveAllData();
+            ApplySorting();
+        }
+
+        #endregion
+
+        #region UI, Zoom & Navigation
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S) { SaveAllData(); ApplySorting(); e.Handled = true; }
@@ -120,6 +216,8 @@ namespace Lehrstellensuchassistenz
                     fe.Margin = ScaleThickness(fe.Margin, factor);
                     if (fe is Control ctrl) ctrl.FontSize *= factor;
                     if (fe is TextBlock tb) tb.FontSize *= factor;
+
+                    if (fe is Panel p) ScaleChildren(p, factor);
                 }
             }
         }
@@ -185,75 +283,6 @@ namespace Lehrstellensuchassistenz
         }
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e) { SaveAllData(); base.OnClosing(e); }
-
-        private void MainFrame_Navigated(object sender, System.Windows.Navigation.NavigationEventArgs e) { }
-
-        private void ClearSelection_Click(object sender, RoutedEventArgs e)
-        {
-            foreach (var company in Companies) company.IsSelectedForAction = false;
-            if (MainFrame.Content is CompanyListPage listPage) listPage.CompanyListBox.Items.Refresh();
-
-            UpdateSelectionVisibility();
-        }
-
-        private void BulkDelete_Click(object sender, RoutedEventArgs e)
-        {
-            bool hasBulk = false;
-            foreach (var c in Companies) if (c.IsSelectedForAction) { hasBulk = true; break; }
-
-            if (hasBulk)
-            {
-                if (_multiSelectService.DeleteSelected()) FinishBulkChange();
-            }
-            else
-            {
-                Company? toDelete = (MainFrame.Content is CompanyListPage lp) ? lp.SelectedCompany : (MainFrame.Content is CompanyElement dp ? dp.Company : null);
-                if (toDelete != null && CompanyService.ConfirmAndDelete(toDelete))
-                {
-                    if (MainFrame.Content is CompanyElement) NavigationService.NavigateTo(new CompanyListPage(Companies));
-                    FinishBulkChange();
-                }
-            }
-        }
-
-        private void FinishBulkChange()
-        {
-            SaveAllData();
-            ApplySorting();
-            UpdateSelectionVisibility();
-        }
-
-        private void BulkStatus_Changed(object sender, SelectionChangedEventArgs e)
-        {
-            if (BulkStatusCombo?.SelectedItem is ApplicationStatus status && BulkStatusCombo.IsDropDownOpen)
-            {
-                _multiSelectService.ChangeStatusForSelected(status);
-                BulkStatusCombo.SelectedIndex = -1;
-                FinishBulkChange();
-            }
-        }
-
-        public void UpdateSelectionVisibility()
-        {
-            var selectedCount = Companies.Count(x => x.IsSelectedForAction);
-
-            if (selectedCount > 0)
-            {
-                SelectionActionGroup.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                SelectionActionGroup.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        private void OnAnyCheckBoxClicked(object sender, RoutedEventArgs e)
-        {
-            // Wir warten ganz kurz, bis das Binding das Model aktualisiert hat
-            Dispatcher.BeginInvoke(new Action(() => {
-                UpdateSelectionVisibility();
-            }), System.Windows.Threading.DispatcherPriority.Background);
-        }
         #endregion
     }
 }

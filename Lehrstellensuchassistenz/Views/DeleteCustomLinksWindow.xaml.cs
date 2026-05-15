@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Lehrstellensuchassistenz.Models;
 using Lehrstellensuchassistenz.Services;
+using Lehrstellensuchassistenz.Resources.Languages; // Wichtig für Langs
 
 namespace Lehrstellensuchassistenz.Views
 {
@@ -29,7 +30,6 @@ namespace Lehrstellensuchassistenz.Views
                 var container = LinksListBox.ItemContainerGenerator.ContainerFromItem(item) as ListBoxItem;
                 if (container != null)
                 {
-                    // Wir suchen die Checkbox im Template des ListBox-Eintrags
                     var checkBox = FindVisualChild<CheckBox>(container);
                     if (checkBox != null && checkBox.IsChecked == true)
                     {
@@ -40,7 +40,13 @@ namespace Lehrstellensuchassistenz.Views
 
             if (toDelete.Count > 0)
             {
-                var result = MessageBox.Show($"{toDelete.Count} Link(s) wirklich entfernen?", "Bestätigen", MessageBoxButton.YesNo);
+                // Nutzt jetzt den extra Link-Delete-Key
+                var result = MessageBox.Show(
+                    $"{toDelete.Count} {Langs.MsgConfirmDeleteLinks}",
+                    Langs.MsgConfirmDeleteTitle,
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
                 if (result == MessageBoxResult.Yes)
                 {
                     foreach (var link in toDelete)
@@ -48,7 +54,7 @@ namespace Lehrstellensuchassistenz.Views
                         _main.CustomLinks.Remove(link);
                     }
 
-                    // Speichern
+                    // Speichern über FileService
                     var fs = new FileService();
                     fs.SaveCustomLinks(new List<SidebarLink>(_main.CustomLinks));
                 }
@@ -58,7 +64,6 @@ namespace Lehrstellensuchassistenz.Views
 
         private void Cancel_Click(object sender, RoutedEventArgs e) => this.Close();
 
-        // Diese Methode sucht tief im UI-Baum nach der Checkbox
         private T FindVisualChild<T>(DependencyObject obj) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)

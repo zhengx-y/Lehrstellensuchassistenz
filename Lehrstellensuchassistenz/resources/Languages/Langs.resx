@@ -1,0 +1,413 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="BtnBack" xml:space="preserve">
+    <value>Zurück</value>
+  </data>
+  <data name="BtnSaveAll" xml:space="preserve">
+    <value>Änderungen speichern</value>
+  </data>
+  <data name="BtnBulkDelete" xml:space="preserve">
+    <value>Markierte löschen</value>
+  </data>
+  <data name="BtnClearSelection" xml:space="preserve">
+    <value>Auswahl aufheben</value>
+  </data>
+  <data name="SortCheckRejectedBottom" xml:space="preserve">
+    <value>Abgelehnt nach unten</value>
+  </data>
+  <data name="SortCheckNoResponseBottom" xml:space="preserve">
+    <value>Keine Antwort nach unten</value>
+  </data>
+  <data name="SortCheckUnappliedTop" xml:space="preserve">
+    <value>Unbeworben nach oben</value>
+  </data>
+  <data name="SortDateAsc" xml:space="preserve">
+    <value>Datum: Älteste zuerst</value>
+  </data>
+  <data name="SortDateDesc" xml:space="preserve">
+    <value>Datum: Neueste zuerst</value>
+  </data>
+  <data name="SortNameAsc" xml:space="preserve">
+    <value>Name: A → Z</value>
+  </data>
+  <data name="SortNameDesc" xml:space="preserve">
+    <value>Name: Z → A</value>
+  </data>
+  <data name="SortEditDesc" xml:space="preserve">
+    <value>Bearbeitet: Neu zuerst</value>
+  </data>
+  <data name="SortEditAsc" xml:space="preserve">
+    <value>Bearbeitet: Alt zuerst</value>
+  </data>
+  <data name="BtnAddCompany" xml:space="preserve">
+    <value>+ Firma hinzufügen</value>
+  </data>
+  <data name="BtnOpenResume" xml:space="preserve">
+    <value>📄 Lebenslauf öffnen</value>
+  </data>
+  <data name="BtnOpenAppFolder" xml:space="preserve">
+    <value>📂 Bewerbungsordner</value>
+  </data>
+  <data name="HeaderMyLinks" xml:space="preserve">
+    <value>MEINE LINKS</value>
+  </data>
+  <data name="HeaderPortals" xml:space="preserve">
+    <value>PORTALE</value>
+  </data>
+  <data name="BtnSettings" xml:space="preserve">
+    <value>⚙ Einstellungen</value>
+  </data>
+  <data name="TitleAddCompany" xml:space="preserve">
+    <value>Neue Firma hinzufügen</value>
+  </data>
+  <data name="LblQuestionCompanyName" xml:space="preserve">
+    <value>Wie heißt die Firma?</value>
+  </data>
+  <data name="BtnAdd" xml:space="preserve">
+    <value>Hinzufügen</value>
+  </data>
+  <data name="BtnCancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="TitleCompanyDetails" xml:space="preserve">
+    <value>Firma Details</value>
+  </data>
+  <data name="LblName" xml:space="preserve">
+    <value>Name:</value>
+  </data>
+  <data name="LblLink" xml:space="preserve">
+    <value>Link:</value>
+  </data>
+  <data name="LblStatus" xml:space="preserve">
+    <value>Status:</value>
+  </data>
+  <data name="LblPhotoPlaceholderMain" xml:space="preserve">
+    <value>Firmenbild / Haus</value>
+  </data>
+  <data name="LblPhotoPlaceholderSub" xml:space="preserve">
+    <value>Klicken zum Auswählen</value>
+  </data>
+  <data name="HeaderNotes" xml:space="preserve">
+    <value>Notizen</value>
+  </data>
+  <data name="PlaceholderNotes" xml:space="preserve">
+    <value>  Schreibe hier wichtige Details, Ansprechpartner oder kopiere Infos rein...</value>
+  </data>
+  <data name="BtnApplyBig" xml:space="preserve">
+    <value>BEWERBEN!</value>
+  </data>
+  <data name="BtnContinue" xml:space="preserve">
+    <value>Fortsetzen</value>
+  </data>
+  <data name="BtnTippsApplication" xml:space="preserve">
+    <value>💡 Bewerbungstipps</value>
+  </data>
+  <data name="BtnTippsCV" xml:space="preserve">
+    <value>📝 Lebenslauftipps</value>
+  </data>
+  <data name="TitleCompanyList" xml:space="preserve">
+    <value>Deine Bewerbungen</value>
+  </data>
+  <data name="LblLastUpdated" xml:space="preserve">
+    <value>Zuletzt aktualisiert:</value>
+  </data>
+  <data name="TitleManageLinks" xml:space="preserve">
+    <value>Links verwalten</value>
+  </data>
+  <data name="LblSelectLinksToDelete" xml:space="preserve">
+    <value>Links zum Löschen auswählen:</value>
+  </data>
+  <data name="BtnDelete" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="TitleSettings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="HeaderSettings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="GroupDataStorage" xml:space="preserve">
+    <value>Daten &amp; Speicher</value>
+  </data>
+  <data name="LblCurrentStoragePath" xml:space="preserve">
+    <value>Aktueller Speicherort für Benutzerdaten:</value>
+  </data>
+  <data name="BtnChooseFolder" xml:space="preserve">
+    <value>Ordner wählen...</value>
+  </data>
+  <data name="HintRestartNote" xml:space="preserve">
+    <value>⚠ Hinweis: Nach der Änderung startet die App automatisch neu.</value>
+  </data>
+  <data name="GroupQuicklinks" xml:space="preserve">
+    <value>Sidebar Quicklinks</value>
+  </data>
+  <data name="LblAddCustomLinks" xml:space="preserve">
+    <value>Eigene Links hinzufügen:</value>
+  </data>
+  <data name="WatermarkLinkName" xml:space="preserve">
+    <value>Name (z.B. Google)</value>
+  </data>
+  <data name="WatermarkLinkUrl" xml:space="preserve">
+    <value>URL (https://...)</value>
+  </data>
+  <data name="BtnManageLinks" xml:space="preserve">
+    <value>Links verwalten / löschen</value>
+  </data>
+  <data name="GroupGeneral" xml:space="preserve">
+    <value>Allgemein</value>
+  </data>
+  <data name="CheckAutostart" xml:space="preserve">
+    <value>App beim Windows-Start automatisch öffnen</value>
+  </data>
+  <data name="BtnCreateShortcut" xml:space="preserve">
+    <value>Desktop-Verknüpfung erstellen</value>
+  </data>
+  <data name="GroupDangerZone" xml:space="preserve">
+    <value>Gefahrenzone</value>
+  </data>
+  <data name="CheckDeleteUserData" xml:space="preserve">
+    <value>Alle Benutzerdaten löschen (Firmen, Notizen, Registry)</value>
+  </data>
+  <data name="CheckDeleteAppFolder" xml:space="preserve">
+    <value>Komplette App entfernen (Programmordner löschen)</value>
+  </data>
+  <data name="BtnStartCleanup" xml:space="preserve">
+    <value>Cleanup starten</value>
+  </data>
+  <data name="TitleTemplates" xml:space="preserve">
+    <value>Bewerbungsvorlagen auswählen</value>
+  </data>
+  <data name="BtnSelectGenericTemplate" xml:space="preserve">
+    <value>Generische Vorlage wählen</value>
+  </data>
+  <data name="LblPreviewCustomTemplate" xml:space="preserve">
+    <value>Vorschau Eigene Vorlage</value>
+  </data>
+  <data name="BtnUseCustomTemplate" xml:space="preserve">
+    <value>Eigene Vorlage verwenden</value>
+  </data>
+  <data name="BtnUploadCustomTemplate" xml:space="preserve">
+    <value>Eigene Vorlage hochladen</value>
+  </data>
+  <data name="BtnSelectEmptyTemplate" xml:space="preserve">
+    <value>Leeres Dokument wählen</value>
+  </data>
+  <data name="WelcomeInfoTitle" xml:space="preserve">
+    <value>Erste Schritte &amp; Hilfe</value>
+  </data>
+  <data name="WelcomeInfoContent" xml:space="preserve">
+    <value>Willkommen bei der Lehrstellensuchassistenz!
+
+📌 DEINE DATEIEN &amp; ORDNER:
+• Bewerbungsordner: Hier findest du alle deine Dateien (Lebenslauf, Zeugnisse).
+• Lebenslauf öffnen: Startet direkt deine hinterlegte PDF-Datei.
+
+🚀 APP-BEDIENUNG:
+• + Firma hinzufügen: Erstellt einen neuen Eintrag.
+• Änderungen speichern: Sichert deine Notizen (Hotkey: STRG + S).
+• Portale: Schneller Zugriff auf AMS, karriere.at &amp; Co.
+
+⌨ TASTATUR-TIPPS:
+• ENTF: Markierte Firma löschen.
+• ESC: Aktuelle Ansicht schließen / Zurück.
+• STRG + Mausrad: Zoomt die gesamte App stufenlos.</value>
+  </data>
+  <data name="BtnUnderstood" xml:space="preserve">
+    <value>Verstanden</value>
+  </data>
+  <data name="TitleWelcome" xml:space="preserve">
+    <value>Willkommen</value>
+  </data>
+  <data name="CheckCreateShortcut" xml:space="preserve">
+    <value>Desktop-Verknüpfung erstellen</value>
+  </data>
+  <data name="BtnFinishSetup" xml:space="preserve">
+    <value>Einrichtung abschließen</value>
+  </data>
+  <data name="HeaderQuickSetup" xml:space="preserve">
+    <value>Schnell-Einrichtung</value>
+  </data>
+  <data name="MsgSaved" xml:space="preserve">
+    <value>Gespeichert!</value>
+  </data>
+  <data name="MsgInfo" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="MsgConfirmDeleteTitle" xml:space="preserve">
+    <value>Löschen bestätigen</value>
+  </data>
+  <data name="MsgConfirmDeleteSingle" xml:space="preserve">
+    <value>Möchtest du diese Firma wirklich löschen?</value>
+  </data>
+  <data name="MsgConfirmDeleteBulk" xml:space="preserve">
+    <value>Möchtest du alle markierten Firmen wirklich löschen?</value>
+  </data>
+  <data name="FilterImages" xml:space="preserve">
+    <value>Bilder (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg</value>
+  </data>
+  <data name="StatusUnbeworben" xml:space="preserve">
+    <value>Noch nicht beworben</value>
+  </data>
+  <data name="StatusBeworben" xml:space="preserve">
+    <value>Beworben</value>
+  </data>
+  <data name="StatusKeineAntwort" xml:space="preserve">
+    <value>Keine Antwort</value>
+  </data>
+  <data name="StatusEingeladen" xml:space="preserve">
+    <value>Eingeladen</value>
+  </data>
+  <data name="StatusAbgelehnt" xml:space="preserve">
+    <value>Abgelehnt</value>
+  </data>
+  <data name="StatusZusage" xml:space="preserve">
+    <value>Zusage</value>
+  </data>
+  <data name="ErrShortcut" xml:space="preserve">
+    <value>Fehler beim Erstellen der Verknüpfung:</value>
+  </data>
+  <data name="MsgShortcutQuestion" xml:space="preserve">
+    <value>Soll eine Verknüpfung auf dem Desktop erstellt werden?</value>
+  </data>
+  <data name="HeaderShortcut" xml:space="preserve">
+    <value>Verknüpfung erstellen</value>
+  </data>
+  <data name="ShortcutDescription" xml:space="preserve">
+    <value>Lehrstellensuchassistenz</value>
+  </data>
+  <data name="MsgConfirmDeleteLinks" xml:space="preserve">
+    <value>Link(s) wirklich entfernen?</value>
+  </data>
+  <data name="ErrLinkOpened" xml:space="preserve">
+    <value>Link konnte nicht geöffnet werden</value>
+  </data>
+  <data name="MsgMigrateQuestion" xml:space="preserve">
+    <value>Möchtest du deine vorhandenen Daten an den neuen Ort verschieben? (Ja: Umziehen / Nein: Leere Datenbank)</value>
+  </data>
+  <data name="MsgPathUpdatedRestart" xml:space="preserve">
+    <value>Speicherort aktualisiert. Die App startet nun neu.</value>
+  </data>
+  <data name="MsgCleanupConfirm" xml:space="preserve">
+    <value>Bist du sicher? Die App wird nach dem Cleanup beendet.</value>
+  </data>
+  <data name="TextApplication" xml:space="preserve">
+    <value>Bewerbung</value>
+  </data>
+</root>

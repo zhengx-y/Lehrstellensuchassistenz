@@ -1,8 +1,9 @@
-﻿using Microsoft.Win32;
+﻿using Lehrstellensuchassistenz.Resources.Languages; // Wichtig für den Zugriff auf Resources
+using Lehrstellensuchassistenz.Services;
+using Microsoft.Win32;
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using Lehrstellensuchassistenz.Services;
 
 namespace Lehrstellensuchassistenz.Services
 {
@@ -26,14 +27,11 @@ namespace Lehrstellensuchassistenz.Services
             using var key = Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
             if (key?.GetValue(WelcomeShownValue) == null)
             {
-                // Wir schicken die Ausführung ans Ende der Prioritäten-Schlange.
-                // Dadurch wird erst das MainWindow komplett gezeichnet.
                 _parentWindow.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     ShowWelcomeInfo();
                     ShowInitialSetup();
 
-                    // Erst nach Abschluss der Dialoge in Registry schreiben
                     using var keyUpdate = Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
                     keyUpdate?.SetValue(WelcomeShownValue, "Yes");
                 }), System.Windows.Threading.DispatcherPriority.ContextIdle);
@@ -44,42 +42,28 @@ namespace Lehrstellensuchassistenz.Services
         {
             var stackPanel = new StackPanel { Margin = new Thickness(25) };
 
-            // Titel - Jetzt etwas dezenter
             stackPanel.Children.Add(new TextBlock
             {
-                Text = "Erste Schritte & Hilfe",
-                FontSize = 18, // Kleinerer Titel
+                Text = Lehrstellensuchassistenz.Resources.Languages.Langs.WelcomeInfoTitle, // Ressource statt Hardcoded
+                FontSize = 18,
                 FontWeight = FontWeights.SemiBold,
                 Margin = new Thickness(0, 0, 0, 15),
                 Foreground = System.Windows.Media.Brushes.DarkBlue
             });
 
-            // Der Text mit Fokus auf den Bewerbungsordner
-            string infoText =
-                "Willkommen bei der Lehrstellensuchassistenz!\n\n" +
-                "📌 DEINE DATEIEN & ORDNER:\n" +
-                "• Bewerbungsordner: Hier findest du alle deine Dateien (Lebenslauf, Zeugnisse).\n" +
-                "• Lebenslauf öffnen: Startet direkt deine hinterlegte PDF-Datei.\n\n" +
-                "🚀 APP-BEDIENUNG:\n" +
-                "• + Firma hinzufügen: Erstellt einen neuen Eintrag.\n" +
-                "• Änderungen speichern: Sichert deine Notizen (Hotkey: STRG + S).\n" +
-                "• Portale: Schneller Zugriff auf AMS, karriere.at & Co.\n\n" +
-                "⌨ TASTATUR-TIPPS:\n" +
-                "• ENTF: Markierte Firma löschen.\n" +
-                "• ESC: Aktuelle Ansicht schließen / Zurück.\n" +
-                "• STRG + Mausrad: Zoomt die gesamte App stufenlos.\n";
-
+            // Der InfoText wird jetzt aus der Ressource geladen
+            // Tipp: In der .resx kannst du Shift+Enter für Zeilenumbrüche nutzen!
             stackPanel.Children.Add(new TextBlock
             {
-                Text = infoText,
-                FontSize = 16, // Schön lesbare Inhaltsgröße
+                Text = Lehrstellensuchassistenz.Resources.Languages.Langs.WelcomeInfoContent,
+                FontSize = 16,
                 LineHeight = 24,
                 TextWrapping = TextWrapping.Wrap
             });
 
             var btnClose = new Button
             {
-                Content = "Verstanden",
+                Content = Lehrstellensuchassistenz.Resources.Languages.Langs.BtnUnderstood, // Ressource
                 Width = 100,
                 Height = 35,
                 Margin = new Thickness(0, 20, 0, 0),
@@ -92,14 +76,13 @@ namespace Lehrstellensuchassistenz.Services
 
             var infoWindow = new Window
             {
-                Title = "Willkommen",
+                Title = Lehrstellensuchassistenz.Resources.Languages.Langs.TitleWelcome, // Ressource
                 SizeToContent = SizeToContent.WidthAndHeight,
                 Width = 520,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = _parentWindow,
                 ResizeMode = ResizeMode.NoResize,
                 Content = stackPanel,
-                // Optional: Ein schöner Rahmen
                 BorderBrush = System.Windows.Media.Brushes.LightGray,
                 BorderThickness = new Thickness(1)
             };
@@ -110,21 +93,20 @@ namespace Lehrstellensuchassistenz.Services
 
         private void ShowInitialSetup()
         {
-            // Wir bauen ein kleines Fenster mit zwei Checkboxen
             var stackPanel = new StackPanel { Margin = new Thickness(20) };
 
-            var cbShortcut = new CheckBox { Content = "Desktop-Verknüpfung erstellen", IsChecked = true, Margin = new Thickness(0, 10, 0, 5) };
-            var cbAutostart = new CheckBox { Content = "App beim Windows-Start automatisch öffnen", IsChecked = false, Margin = new Thickness(0, 5, 0, 20) };
-            var btnSave = new Button { Content = "Einrichtung abschließen", Width = 150, Height = 30 };
+            var cbShortcut = new CheckBox { Content = Lehrstellensuchassistenz.Resources.Languages.Langs.CheckCreateShortcut, IsChecked = true, Margin = new Thickness(0, 10, 0, 5) };
+            var cbAutostart = new CheckBox { Content = Lehrstellensuchassistenz.Resources.Languages.Langs.CheckAutostart, IsChecked = false, Margin = new Thickness(0, 5, 0, 20) };
+            var btnSave = new Button { Content = Lehrstellensuchassistenz.Resources.Languages.Langs.BtnFinishSetup, Width = 150, Height = 30 };
 
-            stackPanel.Children.Add(new TextBlock { Text = "Schnell-Einrichtung", FontWeight = FontWeights.Bold, FontSize = 16 });
+            stackPanel.Children.Add(new TextBlock { Text = Lehrstellensuchassistenz.Resources.Languages.Langs.HeaderQuickSetup, FontWeight = FontWeights.Bold, FontSize = 16 });
             stackPanel.Children.Add(cbShortcut);
             stackPanel.Children.Add(cbAutostart);
             stackPanel.Children.Add(btnSave);
 
             var setupWindow = new Window
             {
-                Title = "Einstellungen",
+                Title = Lehrstellensuchassistenz.Resources.Languages.Langs.TitleSettings, // Ressource
                 SizeToContent = SizeToContent.WidthAndHeight,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = _parentWindow,
@@ -134,12 +116,8 @@ namespace Lehrstellensuchassistenz.Services
 
             btnSave.Click += (s, e) =>
             {
-                // Verknüpfung erstellen wenn gewählt
                 if (cbShortcut.IsChecked == true) _shortcutService.CreateDesktopShortcut();
-
-                // Autostart setzen
                 _autostartService.SetAutostart(cbAutostart.IsChecked == true);
-
                 setupWindow.Close();
             };
 

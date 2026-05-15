@@ -1,15 +1,30 @@
 ﻿using Lehrstellensuchassistenz.Models;
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
+using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
 namespace Lehrstellensuchassistenz.Converters
 {
-    // 1. Wandelt den Status in eine Farbe um
+    // 1. NEU: Checkt ob Firmen in einer Liste markiert sind (für die Top-Bar Sichtbarkeit)
+    public class CollectionToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            // Wir prüfen, ob in der Collection irgendeine Firma IsSelectedForAction = true hat
+            if (value is IEnumerable<Company> companies)
+            {
+                return companies.Any(c => c.IsSelectedForAction) ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
+    // 2. Farben-Converter (Optimiert auf Performance)
     public class StatusToColorConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -20,10 +35,10 @@ namespace Lehrstellensuchassistenz.Converters
 
                 return status switch
                 {
-                    ApplicationStatus.Unbeworben => (SolidColorBrush?)resources["WartendBrush"] ?? Brushes.Gray,
-                    ApplicationStatus.Beworben => (SolidColorBrush?)resources["BeworbenBrush"] ?? Brushes.DarkBlue,
-                    ApplicationStatus.Abgelehnt => (SolidColorBrush?)resources["AbgelehntBrush"] ?? Brushes.DarkRed,
-                    ApplicationStatus.Zusage => (SolidColorBrush?)resources["AngenommenBrush"] ?? Brushes.Green,
+                    ApplicationStatus.Unbeworben => resources["WartendBrush"] as SolidColorBrush ?? Brushes.Gray,
+                    ApplicationStatus.Beworben => resources["BeworbenBrush"] as SolidColorBrush ?? Brushes.DarkBlue,
+                    ApplicationStatus.Abgelehnt => resources["AbgelehntBrush"] as SolidColorBrush ?? Brushes.DarkRed,
+                    ApplicationStatus.Zusage => resources["AngenommenBrush"] as SolidColorBrush ?? Brushes.Green,
                     ApplicationStatus.Eingeladen => Brushes.DarkOrange,
                     ApplicationStatus.KeineAntwort => Brushes.LightGray,
                     _ => Brushes.Transparent
@@ -31,42 +46,55 @@ namespace Lehrstellensuchassistenz.Converters
             }
             return Brushes.Transparent;
         }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
-    // 2. Zeigt Elemente nur an, wenn der Wert nicht NULL ist
+    // 3. Null/Empty Check (Verbessert für Strings)
     public class NullToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value == null ? Visibility.Collapsed : Visibility.Visible;
+            if (value == null) return Visibility.Collapsed;
+            if (value is string s && string.IsNullOrWhiteSpace(s)) return Visibility.Collapsed;
+            return Visibility.Visible;
         }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
-    // 3. Wahrheitswert zu Sichtbarkeit
+    // 4. Bool Check (Mit Invert-Option)
     public class BoolToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value is bool boolValue && boolValue ? Visibility.Visible : Visibility.Collapsed;
+            bool val = (value is bool b) && b;
+            if (parameter as string == "Invert") val = !val;
+            return val ? Visibility.Visible : Visibility.Collapsed;
         }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is Visibility v) return v == Visibility.Visible;
+            return false;
+        }
     }
 
-    // 4. Holt den Text aus dem [Description] Attribut des Enums
-    public class EnumDescriptionConverter : IValueConverter
+    // 5. Text-Übersetzung (Gefixed für Two-Way Binding)
+    public class EnumToLocalizedNameConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null) return string.Empty;
-
-            FieldInfo fi = value.GetType().GetField(value.ToString());
-            if (fi == null) return value.ToString();
-
-            var attributes = (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
-            return attributes.Length > 0 ? attributes[0].Description : value.ToString();
+            if (value is ApplicationStatus status)
+            {
+                return status.ToDisplayName();
+            }
+            return value?.ToString() ?? string.Empty;
         }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            // Fix: Wenn die ComboBox den Text zurückgibt, muss dieser wieder in das Enum gewandelt werden.
+            // Da WPF ComboBoxen oft das Enum-Member selbst als DataContext halten, 
+            // ist Binding.DoNothing oft sicherer, wenn das Binding im Model nur 'OneWay' ist.
+            return Binding.DoNothing;
+        }
     }
 }

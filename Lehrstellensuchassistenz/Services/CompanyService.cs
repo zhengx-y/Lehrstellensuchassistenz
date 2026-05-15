@@ -4,13 +4,13 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using Lehrstellensuchassistenz.Models;
+using Lehrstellensuchassistenz.Resources.Languages; // Wichtig für den Zugriff auf Langs
 
 namespace Lehrstellensuchassistenz.Services
 {
     public class CompanyService
     {
         private readonly ObservableCollection<Company> _companies;
-        // Wir holen uns den SortingService als Experten dazu
         private readonly SortingService _sortingService = new SortingService();
 
         public CompanyService(ObservableCollection<Company> companies)
@@ -30,9 +30,10 @@ namespace Lehrstellensuchassistenz.Services
         {
             if (company == null) return false;
 
+            // Nutzt jetzt MsgConfirmDeleteSingle und MsgConfirmDeleteTitle aus Langs
             var result = MessageBox.Show(
-                $"Soll die Firma \"{company.Name}\" wirklich gelöscht werden?",
-                "Löschen bestätigen",
+                $"{Langs.MsgConfirmDeleteSingle}\n\n({company.Name})",
+                Langs.MsgConfirmDeleteTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 
@@ -43,16 +44,11 @@ namespace Lehrstellensuchassistenz.Services
             return false;
         }
 
-        /// <summary>
-        /// Delegiert die Sortierung an den SortingService.
-        /// </summary>
         public List<Company> GetSortedList(SortCriteria criteria)
         {
-            // Wir lassen den SortingService die Arbeit machen
             return _sortingService.SortCompanies(_companies, criteria);
         }
 
-        // Die Definition bleibt hier, damit MainWindow.xaml.cs nicht kaputt geht
         public class SortCriteria
         {
             public string Tag { get; set; } = "DateDesc";

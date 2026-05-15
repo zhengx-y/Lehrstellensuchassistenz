@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:lang="clr-namespace:Lehrstellensuchassistenz.Resources.Languages"
         mc:Ignorable="d"
-        Title="Links verwalten" Height="400" Width="350" 
+        Title="{x:Static lang:Langs.TitleManageLinks}" Height="400" Width="350" 
         WindowStartupLocation="CenterOwner"
         Background="#F5F5F5">
     <Grid Margin="20">
@@ -14,7 +15,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Links zum Löschen auswählen:" 
+        <TextBlock Text="{x:Static lang:Langs.LblSelectLinksToDelete}" 
                    FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15"/>
 
         <ListBox x:Name="LinksListBox" Grid.Row="1" Margin="0,0,0,15" Padding="5">
@@ -28,8 +29,8 @@
         </ListBox>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Abbrechen" Width="90" Height="30" Margin="0,0,10,0" Click="Cancel_Click"/>
-            <Button Content="Löschen" Width="90" Height="30" 
+            <Button Content="{x:Static lang:Langs.BtnCancel}" Width="90" Height="30" Margin="0,0,10,0" Click="Cancel_Click"/>
+            <Button Content="{x:Static lang:Langs.BtnDelete}" Width="90" Height="30" 
                     Background="#E57373" Foreground="White" FontWeight="Bold"
                     Click="DeleteSelected_Click"/>
         </StackPanel>
