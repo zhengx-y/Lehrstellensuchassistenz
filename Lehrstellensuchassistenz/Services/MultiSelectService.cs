@@ -31,7 +31,7 @@ namespace Lehrstellensuchassistenz.Services
 
             // Nutzt jetzt MsgConfirmDeleteBulk und MsgConfirmDeleteTitle aus Langs
             var result = MessageBox.Show(
-                $"{selected.Count} {Langs.MsgConfirmDeleteBulk}",
+                $"{Langs.MsgConfirmDeleteBulk} {selected.Count}",
                 Langs.MsgConfirmDeleteTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);

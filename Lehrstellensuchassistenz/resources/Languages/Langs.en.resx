@@ -357,7 +357,8 @@
     <value>Do you really want to delete this company?</value>
   </data>
   <data name="MsgConfirmDeleteBulk" xml:space="preserve">
-    <value>Do you really want to delete all selected companies?</value>
+    <value>Do you really want to delete all selected companies?
+Total:</value>
   </data>
   <data name="FilterImages" xml:space="preserve">
     <value>Images (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg</value>

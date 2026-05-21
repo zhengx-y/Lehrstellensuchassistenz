@@ -45,7 +45,7 @@ namespace Lehrstellensuchassistenz.Services
             {
                 // Lebenslauftipps: karriere.at für AT, Monster für EN
                 url = isEnglish
-                    ? "https://www.monster.com/career-advice/article/cv-tips"
+                    ? "https://www.monster.com/career-advice/resume/how-to-write-a-cv"
                     : "https://www.karriere.at/c/lebenslauf";
             }
 

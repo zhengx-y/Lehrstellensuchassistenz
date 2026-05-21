@@ -357,7 +357,8 @@
     <value>Möchtest du diese Firma wirklich löschen?</value>
   </data>
   <data name="MsgConfirmDeleteBulk" xml:space="preserve">
-    <value>Möchtest du alle markierten Firmen wirklich löschen?</value>
+    <value>Möchtest du alle markierten Firmen wirklich löschen?
+Insgesamt:</value>
   </data>
   <data name="FilterImages" xml:space="preserve">
     <value>Bilder (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg</value>
