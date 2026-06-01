@@ -42,16 +42,16 @@
         <StackPanel Grid.Row="0" Grid.Column="0" Margin="15,15,5,15">
             <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="160"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{x:Static lang:Langs.LblName}" FontSize="22" FontWeight="Bold" Foreground="Black" VerticalAlignment="Center"/>
-                <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" FontSize="22" Padding="5"/>
+                <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" FontSize="22" Padding="5" />
             </Grid>
 
             <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="160"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="45"/>
                 </Grid.ColumnDefinitions>
@@ -62,7 +62,7 @@
 
             <Grid Margin="0,0,0,15">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="160"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{x:Static lang:Langs.LblStatus}" FontSize="18" Foreground="Black" VerticalAlignment="Center"/>
@@ -88,7 +88,7 @@
             <StackPanel Margin="0,5,0,0">
                 <Grid Margin="0,0,0,4">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="160"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{x:Static lang:Langs.LblCreatedAt}" FontSize="16" Foreground="Gray" VerticalAlignment="Center"/>
@@ -97,7 +97,7 @@
 
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="160"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{x:Static lang:Langs.LblLastUpdated}" FontSize="16" Foreground="Gray" VerticalAlignment="Center"/>
