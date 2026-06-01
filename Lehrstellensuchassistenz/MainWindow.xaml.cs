@@ -181,7 +181,7 @@ namespace Lehrstellensuchassistenz
         #region UI, Zoom & Navigation
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S) { SaveAllData(); ApplySorting(); e.Handled = true; }
+            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S) { SaveAllData(); MessageBox.Show(Langs.MsgSaved, Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Information); ApplySorting(); e.Handled = true; }
             if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.N) { AddCompany_Click(this, new RoutedEventArgs()); e.Handled = true; }
             if (e.Key == Key.Delete && !IsUserTyping()) { BulkDelete_Click(this, new RoutedEventArgs()); e.Handled = true; }
         }
