@@ -281,7 +281,11 @@ namespace Lehrstellensuchassistenz
 
         private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplySorting();
         private void SortTrigger_Click(object sender, RoutedEventArgs e) => ApplySorting();
-        private void Settings_Click(object sender, RoutedEventArgs e) => NavigationService.NavigateTo(new SettingsPage());
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+            SaveAllData();
+            NavigationService.NavigateTo(new SettingsPage());
+        }
 
         public CompanyService.SortCriteria GetCurrentSortCriteria()
         {

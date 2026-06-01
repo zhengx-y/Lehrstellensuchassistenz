@@ -61,7 +61,7 @@ namespace Lehrstellensuchassistenz.Views
                     // Benutzt HintRestartNote und MsgInfo
                     MessageBox.Show(Langs.HintRestartNote, Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    RestartApplication();
+                    RestartService.RestartApplication();
                 }
             }
         }
@@ -103,38 +103,13 @@ namespace Lehrstellensuchassistenz.Views
                 // Neuer Key: MsgPathUpdatedRestart
                 MessageBox.Show(Langs.MsgPathUpdatedRestart, Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Information);
 
-                RestartApplication();
+                RestartService.RestartApplication();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"{Langs.MsgInfo}: {ex.Message}", Langs.MsgInfo, MessageBoxButton.OK, MessageBoxImage.Error);
                 PathTextBox.Text = oldPath;
             }
-        }
-
-        private void RestartApplication()
-        {
-            try
-            {
-                string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
-                if (string.IsNullOrEmpty(exePath)) exePath = Environment.ProcessPath;
-
-                if (!string.IsNullOrEmpty(exePath))
-                {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = exePath,
-                        UseShellExecute = true
-                    });
-                    Environment.Exit(0);
-                }
-                else
-                {
-                    // Hier könnte man noch einen Key "ErrExeNotFound" hinzufügen falls nötig
-                    Application.Current.Shutdown();
-                }
-            }
-            catch { Environment.Exit(0); }
         }
 
         private void DeleteAllData_Click(object sender, RoutedEventArgs e)
