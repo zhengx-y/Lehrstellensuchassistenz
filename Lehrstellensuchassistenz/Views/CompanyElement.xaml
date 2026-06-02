@@ -164,7 +164,7 @@
                         </Button.Resources>
                     </Button>
 
-                    <Button Content="{x:Static lang:Langs.BtnContinue}" Width="150" Height="55" Margin="15,0,0,0" FontSize="18" FontWeight="Bold"
+                    <Button x:Name="ContinueButton" Content="{x:Static lang:Langs.BtnContinue}" Width="150" Height="55" Margin="15,0,0,0" FontSize="18" FontWeight="Bold"
                             Background="#2196F3" Foreground="White" BorderThickness="0"
                             Visibility="{Binding LastApplicationPath, Converter={StaticResource NullToVisibilityConverter}}" 
                             Click="ContinueButton_Click">

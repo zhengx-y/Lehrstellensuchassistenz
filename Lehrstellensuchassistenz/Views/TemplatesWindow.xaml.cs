@@ -98,11 +98,10 @@ namespace Lehrstellensuchassistenz.Views
                 string targetFolder = Path.Combine(appDataPath, "applications");
                 Directory.CreateDirectory(targetFolder);
 
-                // Dynamischer Dateiname: Nutzt Firmennamen oder lokalisiertes "Bewerbung"
-                string companyName = _company?.Name ?? Langs.TextApplication;
+                string companyName = _company.Name!;
                 foreach (char c in Path.GetInvalidFileNameChars()) companyName = companyName.Replace(c, '_');
 
-                string newFileName = $"{companyName}_{DateTime.Now:yyyyMMdd_HHmm}.docx";
+                string newFileName = $"{companyName}_{Langs.TextApplication}_{DateTime.Now:yyyyMMdd_HHmm}.docx";
                 string targetPath = Path.Combine(targetFolder, newFileName);
 
                 File.Copy(sourceFile, targetPath, true);

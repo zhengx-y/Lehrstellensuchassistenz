@@ -180,6 +180,7 @@ namespace Lehrstellensuchassistenz.Views
                 catch (Exception ex)
                 {
                     MessageBox.Show($"{Langs.MsgErrorOpenOriginal}: {ex.Message}");
+                    Company.LastApplicationPath = null;
                 }
             }
         }
