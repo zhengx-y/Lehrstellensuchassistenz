@@ -206,7 +206,10 @@ namespace Lehrstellensuchassistenz.Services
         public void OpenOrSelectResume()
         {
             string pdfInUserFiles = Path.Combine(_userFilesPath, _resumeName);
-            if (File.Exists(pdfInUserFiles)) { OpenFile(pdfInUserFiles); }
+            if (File.Exists(pdfInUserFiles))
+            {
+                OpenFile(pdfInUserFiles);
+            }
             else
             {
                 // Nutzt Langs für Titel und Filter
@@ -215,11 +218,17 @@ namespace Lehrstellensuchassistenz.Services
                 {
                     try
                     {
+                        // Extract just the file name (e.g., "my_resume.pdf") from the full path
+                        string selectedFileName = Path.GetFileName(dialog.FileName);
+
                         File.Copy(dialog.FileName, pdfInUserFiles, true);
-                        File.Copy(pdfInUserFiles, Path.Combine(_applicationsPath, _resumeName), true);
+                        File.Copy(pdfInUserFiles, Path.Combine(_applicationsPath, selectedFileName), true);
                         OpenFile(pdfInUserFiles);
                     }
-                    catch (Exception ex) { MessageBox.Show(ex.Message); }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
                 }
             }
         }
