@@ -7,7 +7,7 @@
         xmlns:lang="clr-namespace:Lehrstellensuchassistenz.Resources.Languages"
         xmlns:conv="clr-namespace:Lehrstellensuchassistenz.Converters" 
         mc:Ignorable="d"
-        Title="Lehrstellensuchassistenz v3.0.1"
+        Title="Lehrstellensuchassistenz"
         Height="720" Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown"
         WindowState="Maximized">
